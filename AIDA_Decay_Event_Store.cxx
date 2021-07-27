@@ -45,6 +45,7 @@ void AidaCluster::Zero()
   Side = 0;
   HighEnergy = false;
   Energy = 0;
+  Intensity = 0;
   Strip = 0;
   Time = 0;
   FastTime = 0;
@@ -73,6 +74,7 @@ void AidaCluster::AddEvent(AidaEvent const& event)
     FastTimeMax = event.FastTime;
   }
   Energy += event.Energy;
+  Intensity += event.Intensity;
   if(event.Strip < StripMin) StripMin = event.Strip;
   if(event.Strip > StripMax) StripMax = event.Strip;
   if(event.Time < TimeMin) TimeMin = event.Time;
@@ -100,6 +102,7 @@ void AidaCluster::AddCluster(AidaCluster const& cluster)
   if (cluster.FastTimeMin < FastTimeMin) FastTimeMin = cluster.FastTimeMin;
   if (cluster.FastTimeMax > FastTimeMax) FastTimeMax = cluster.FastTimeMax;
   Energy += cluster.Energy;
+  Intensity += cluster.Intensity;
   StripSum += cluster.StripSum;
   N += cluster.N;
   Strip = (double)StripSum / N;

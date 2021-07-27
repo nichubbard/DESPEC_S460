@@ -14,13 +14,16 @@
 
 // Uncomment this to align the AIDA ASICs with a pulser
 //  Only needed if the ASICs didn't align properly
-//#define AIDA_PULSER_ALIGN
+// #define AIDA_PULSER_ALIGN
 
 #include "EventAnlProc.h"
 
 #include <cstdlib>
+#include <fstream>
 #include <math.h>
+#include <sstream>
 #include <unordered_map>
+#include <sstream>
 
 #include "TH1.h"
 #include "TH2.h"
@@ -39,6 +42,16 @@
 #include "TAidaConfiguration.h"
 #include "TFRSParameter.h"
 #include "DESPECAnalysis.h"
+
+//#define AIDA_REMOVE_MULTIHITS 1
+//#define AIDA_CALIBRATE 1
+//#define AIDA_CALIBRATE_CLUSTER 1
+
+#if AIDA_CALIBRATE
+#include <unistd.h>
+std::ofstream aida_file;
+size_t aida_file_n = 0;
+#endif
 
 #define ABS(x)  ((x)>=0 ? (x):-(x))  // absolute_value(x)
 #define ZERO_ARRAY(x) memset(x, 0, sizeof(x)) //reset arrays to 0
@@ -78,6 +91,20 @@ TGo4EventProcessor(name)
     get_used_systems();
     FRS_Gates();
 
+#if AIDA_CALIBRATE
+#if AIDA_CALIBRATE_CLUSTER
+    std::stringstream fname;
+    char hostname[128] = {'\0'};
+    gethostname(hostname, 128);
+    fname << "aida_calibration_" << hostname << "_" << getpid() << ".txt";
+    aida_file.open(fname.str().c_str(), ios::app | ios::out);
+    std::cout << "Creating calibration file " << fname.str() << std::endl;
+#else
+    aida_file.open("aida_calibration.txt", ios::app | ios::out);
+    std::cout << "Creating calibration file aida_calibration.txt" << std::endl;
+#endif
+    aida_file << "# DSSD XStrip XAmplitude YStrip YAmplitude" << std::endl;
+#endif
 }
 //-----------------------------------------------------------
 EventAnlProc::~EventAnlProc()
@@ -88,12 +115,23 @@ EventAnlProc::~EventAnlProc()
 
 void EventAnlProc::UserPostLoop()
 {
+#if AIDA_CALIBRATE
+  aida_file.close();
+  cout << "Wrote " << aida_file_n << " calibration entries to aida_calibration.txt" << std::endl;
+  cout << "Run aida-cal.py to generate gains" << std::endl;
+#endif
+
   TAidaConfiguration const* conf = TAidaConfiguration::GetInstance();
   if (!conf->ShowStats()) return;
   std::cout << "AIDA Analysis Statistics" << std::endl;
   std::cout << "Incoming Implant Events: " << implantEvents << std::endl;
   std::cout << "Good Implant Events    : " << goodImplantEvents << " (" << (100. * goodImplantEvents / implantEvents) << "%)" << std::endl;
   std::cout << "Stopped Implant Events : " << stoppedEvents << " (" << (100. * stoppedEvents / implantEvents) << "%)" << std::endl;
+  std::cout << "----" << std::endl;
+  std::cout << "Decay Events: " << decayEvents << std::endl;
+  std::cout << "Pulser Events: " << pulserEvents << std::endl;
+  std::cout << "Nonsense Events: " << nonsenseEvents << std::endl;
+
 }
 
 //-----------------------------------------------------------
@@ -1130,6 +1168,8 @@ void EventAnlProc::Make_Aida_Histos(){
     decays_strip_1d[i] = MakeTH1('I', Form("AIDA/Decays/DSSD%d_decays_strip_1d", i+1), Form("DSSD %d decay 1D hit pattern", i+1), 256, 0, 256, "Strip number");
     decays_per_event[i] = MakeTH1('I', Form("AIDA/Decays/DSSD%d_decays_per_event", i+1), Form("DSSD %d decays per event", i+1), 100, 0, 100, "Number of decays");
 
+    pulser_energy = MakeTH1('I', Form("AIDA/Decays/Pulser_energy"), Form("AIDA Pulser event energy"), 2000, 0, 20000, "Energy/Mev");
+
 //     implants_channels[i] = MakeTH1('I', Form("AIDA/DSSD%d_implants_channels", i+1), Form("DSSD %d number of implant channels", i+1), 769, 0, 769);
 //     decays_channels[i] = MakeTH1('I', Form("AIDA/DSSD%d_decays_channels", i+1), Form("DSSD %d number of decay channels", i+1), 769, 0, 769);
   }
@@ -1213,13 +1253,13 @@ void EventAnlProc::ProcessAida(EventUnpackStore* pInputMain, EventAnlStore* pOut
         }
       }
 
-      int channels[768] = {0};
+      std::vector<int> channels(conf->FEEs() * 64);
       for (auto& i : pInput->ImplantEvents)
       {
         channels[i.Module * 64 + i.Channel]++;
       }
       int channelM = 0;
-      for (int i = 0; i < 768; ++i){
+      for (int i = 0; i < 64 * conf->FEEs(); ++i){
         if (channels[i]) ++channelM;
       }
       //implants_channels[0]->Fill(channelM);
@@ -1281,7 +1321,7 @@ void EventAnlProc::ProcessAida(EventUnpackStore* pInputMain, EventAnlStore* pOut
 
         int channel = i.first.Strip;
         implants_strip_1d[hit.DSSD - 1]->Fill(channel);
-        channel = i.second.Strip + 128;
+        channel = i.second.Strip + (conf->Wide() ? 386 : 128);
         implants_strip_1d[hit.DSSD - 1]->Fill(channel);
       }
       //
@@ -1316,6 +1356,10 @@ void EventAnlProc::ProcessAida(EventUnpackStore* pInputMain, EventAnlStore* pOut
       {
         decayEvents--;
         pulserEvents++;
+        for( auto& i : pInput->DecayEvents)
+        {
+          pulser_energy->Fill(i.Energy);
+        }
 #ifdef AIDA_PULSER_ALIGN
         if(channelM > 700)
         //if(pInputMain->fTrigger == 3)
@@ -1407,8 +1451,23 @@ void EventAnlProc::ProcessAida(EventUnpackStore* pInputMain, EventAnlStore* pOut
 
         aida_coord_t x{i.first.DSSD, i.first.Side, i.first.Strip};
         aida_coord_t y{i.second.DSSD, i.second.Side, i.second.Strip};
+#if AIDA_REMOVE_MULTIHITS
         if (mults[x] > 1 || mults[y] > 1)
           continue;
+#endif
+
+#if AIDA_CALIBRATE
+        // Record single-pixel hits of > 1 MeV for calibration of AIDA
+        if (hit.Energy > 1000 && hits.size() == 1
+            && hit.StripXMin == hit.StripXMax
+            && hit.StripYMin == hit.StripYMax
+           )
+        {
+          aida_file << hit.DSSD << " " << i.first.Strip << " " << (i.first.Intensity)
+            << " " << i.second.Strip << " " << (i.second.Intensity) << std::endl;
+          aida_file_n++;
+        }
+#endif
 
 //         pInput->Decays.push_back(hit);
 //         //pOutput->pAida.push_back(hit); ///TEST
@@ -1426,7 +1485,7 @@ void EventAnlProc::ProcessAida(EventUnpackStore* pInputMain, EventAnlStore* pOut
 
         int channel = i.first.Strip;
         decays_strip_1d[hit.DSSD - 1]->Fill(channel);
-        channel = i.second.Strip + 128;
+        channel = i.second.Strip + (conf->Wide() ? 386 : 128);
         decays_strip_1d[hit.DSSD - 1]->Fill(channel);
       }
 
@@ -1458,8 +1517,10 @@ std::vector<AidaCluster> EventAnlProc::EventsToClusters(std::vector<AidaEvent> c
     if (i.DSSD == -1) continue;
  
     aida_coord_t coord{i.DSSD, i.Side, i.Strip};
+#if AIDA_REMOVE_MULTIHITS
     if(++stripm[coord] > 1)
       continue;
+#endif
 
     bool added = false;
     AidaCluster* cluster;
@@ -1469,7 +1530,8 @@ std::vector<AidaCluster> EventAnlProc::EventsToClusters(std::vector<AidaEvent> c
     while (it != std::end(clusters))
     {
       auto& j = *it;
-      if(j.IsAdjacent(i) && j.IsGoodTime(i))
+      // only cluster implants for now!
+      if(j.HighEnergy && j.IsAdjacent(i) && j.IsGoodTime(i))
       {
         // Add the event to the cluster
         if (!added)
@@ -1498,6 +1560,7 @@ std::vector<AidaCluster> EventAnlProc::EventsToClusters(std::vector<AidaEvent> c
     }
   }
 
+#if AIDA_REMOVE_MULTIHITS
   // remove bad strips again
   auto it = std::begin(clusters);
   while (it != std::end(clusters))
@@ -1507,9 +1570,11 @@ std::vector<AidaCluster> EventAnlProc::EventsToClusters(std::vector<AidaEvent> c
     for(int s = j.StripMin; s <= j.StripMax; s++)
     {
       aida_coord_t coord{j.DSSD, j.Side, s};
+#if AIDA_REMOVE_MULTIHITS
       if (stripm[coord] > 1) {
         destroy = true;
       }
+#endif
     }
     if (destroy) {
       it = clusters.erase(it);
@@ -1517,6 +1582,7 @@ std::vector<AidaCluster> EventAnlProc::EventsToClusters(std::vector<AidaEvent> c
     }
     ++it;
   }
+#endif
 
   return clusters;
 }
@@ -1528,7 +1594,12 @@ AidaHit EventAnlProc::ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const
 
   hit.StripX = i.first.Strip;
   hit.StripY = i.second.Strip;
-  hit.PosX = 75.6 * i.first.Strip / 128. - 37.75;
+  if (TAidaConfiguration::GetInstance()->Wide()) {
+    hit.PosX = 226.8 * i.first.Strip / 386. - 113.45;
+  }
+  else {
+    hit.PosX = 75.6 * i.first.Strip / 128. - 37.75;
+  }
   hit.PosY = 75.6 * i.second.Strip / 128. - 37.75;
 
   hit.StripXMin = i.first.StripMin;

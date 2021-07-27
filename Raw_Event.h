@@ -173,6 +173,7 @@ private:
 
     //AIDA
     double      AIDA_Energy[AIDA_MAX_HITS];
+    double      AIDA_Intensity[AIDA_MAX_HITS];
     int         AIDA_FEE[AIDA_MAX_HITS];
     int         AIDA_CHA_ID[AIDA_MAX_HITS];
     ULong64_t   AIDA_WR[AIDA_MAX_HITS];
@@ -347,7 +348,7 @@ public:
 //      void set_DATA_AIDA_DECAY(double***, int, int*, ULong64_t**, int);
 //      void set_DATA_AIDA_IMP(double**, int, int*, ULong64_t**, int);
 
-     void set_DATA_AIDA(double*, int*, int*, ULong64_t*, int, bool*, int*, int*, int*, ULong64_t*, int*, std::vector<AidaScaler> const&);
+     void set_DATA_AIDA(double*, int*, int*, ULong64_t*, int, bool*, int*, int*, int*, ULong64_t*, int*, std::vector<AidaScaler> const&, double*);
      //void Nset_DATA_AIDA(AidaEvent*);
 
      void set_AIDA_Event(int);
@@ -519,6 +520,7 @@ public:
     
 	// ####################################################
     double  get_AIDA_Energy(int i);
+    double  get_AIDA_Intensity(int i);
     int     get_AIDA_FEE_ID(int i);
     int     get_AIDA_CHA_ID(int i);
     ULong64_t get_AIDA_WR(int i);

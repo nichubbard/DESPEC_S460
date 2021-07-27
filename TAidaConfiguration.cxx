@@ -11,7 +11,9 @@
 
 TAidaConfiguration* TAidaConfiguration::instance = nullptr;
 
-TAidaConfiguration::TAidaConfiguration(std::string path)
+TAidaConfiguration::TAidaConfiguration(std::string path) :
+    fees(0), dssds(0), wide(false), adjustadc(false), useucesb(false),
+    ignorembsts(false), stats(false), ucesbshift(0), eventwindow(2000)
 {
   ReadConfiguration(path);
   DSSDtoFEE();
@@ -79,6 +81,10 @@ void TAidaConfiguration::ReadConfiguration(std::string path)
         d.DSSD = -1;
       }
     }
+    else if (option == "wide")
+    {
+      line >> std::boolalpha >> wide;
+    }
     else if (option == "ignorembsts")
     {
       line >> std::boolalpha >> ignorembsts;
@@ -132,6 +138,30 @@ void TAidaConfiguration::ReadConfiguration(std::string path)
     {
       line >> dssd[sub_DSSD - 1].Right;
     }
+    else if (option == "leftleft" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].Left;
+    }
+    else if (option == "leftright" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].LeftRight;
+    }
+    else if (option == "centreleft" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].CentreLeft;
+    }
+    else if (option == "centreright" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].CentreRight;
+    }
+    else if (option == "rightleft" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].RightLeft;
+    }
+    else if (option == "rightright" && sub && sub_DSSD > 0)
+    {
+      line >> dssd[sub_DSSD - 1].Right;
+    }
     else if (option == "x" && sub && sub_DSSD > 0)
     {
       std::string arg;
@@ -170,6 +200,7 @@ void TAidaConfiguration::ReadConfiguration(std::string path)
   std::cout << "AIDA Options: ";
   if (ignorembsts) std::cout << "NoMBS ";
   else std::cout << "MBS ";
+  if (wide) std::cout << "wide ";
   if (useucesb) std::cout << "ucesb ";
   if (stats) std::cout << "stats ";
   std::cout << std::endl;
@@ -199,5 +230,30 @@ void TAidaConfiguration::DSSDtoFEE()
     fee[d.Left-1].DSSD = d.DSSD;
     fee[d.Left-1].High = false;
     fee[d.Left-1].Side = d.XSide;
+
+    if (!wide) continue;
+    fee[d.Left-1].Segment = WideAIDASegment::Left;
+
+    fee[d.LeftRight-1].DSSD = d.DSSD;
+    fee[d.LeftRight-1].High = true;
+    fee[d.LeftRight-1].Side = d.XSide;
+    fee[d.LeftRight-1].Segment = WideAIDASegment::Left;
+
+    fee[d.CentreLeft-1].DSSD = d.DSSD;
+    fee[d.CentreLeft-1].High = false;
+    fee[d.CentreLeft-1].Side = d.XSide;
+    fee[d.CentreLeft-1].Segment = WideAIDASegment::Centre;
+
+    fee[d.CentreRight-1].DSSD = d.DSSD;
+    fee[d.CentreRight-1].High = true;
+    fee[d.CentreRight-1].Side = d.XSide;
+    fee[d.CentreRight-1].Segment = WideAIDASegment::Centre;
+
+    fee[d.RightLeft-1].DSSD = d.DSSD;
+    fee[d.RightLeft-1].High = false;
+    fee[d.RightLeft-1].Side = d.XSide;
+    fee[d.RightLeft-1].Segment = WideAIDASegment::Right;
+
+    fee[d.Right-1].Segment = WideAIDASegment::Right;
   }
 }

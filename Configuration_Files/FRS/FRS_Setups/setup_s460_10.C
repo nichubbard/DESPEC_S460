@@ -46,12 +46,6 @@ void setup_s460_10()
     return;
   }
 
-  TLABRParameter* labr = dynamic_cast<TLABRParameter*> (an->GetParameter("LABRPar"));
-  if (labr==0) {
-    cout << "!!!  Parameter LABRPar not found" << endl;
-    return;
-  }
-
   TSIParameter* si = dynamic_cast<TSIParameter*> (an->GetParameter("SIPar"));
   if (si==0) {
     cout << "!!!  Parameter SIPar not found" << endl;
@@ -1031,21 +1025,6 @@ void setup_s460_10()
 //    labr->labr_offset7 = 0.;
 //    labr->labr_offset8 = 0.;
 
-  //=======
-  //  Si
-  //=======
-
-  si->si_factor1=5.82775; //CH 03/06/2016
-  si->si_offset1=-381.593; //CH 03/06/2016
-
-  si->si_factor2=3.809; //CH 18.10.2014
-  si->si_offset2=-529.01; //CH 18.10.2014
-
-  si->si_factor3=3.2596; //CH 21.05.2016
-  si->si_offset3=-550.59; //CH 21.05.2016|
-
-  si->si_factor4=3.2596; //CH 21.05.2016
-  si->si_offset4=-550.59; //CH 21.05.2016
 /*
   for(int i = 0; i<32; i++){
     si->dssd_factor_det1[i]=1.;

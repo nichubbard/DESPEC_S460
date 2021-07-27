@@ -520,7 +520,9 @@ Bool_t EventUnpackProc::BuildEvent(TGo4EventElement* dest)
             evt.ID = AIDA_evtID[i];
             evt.Data = RAW->get_AIDA_ADC(i);
             evt.Energy = AIDA_Energy[i];
+            evt.Intensity = RAW->get_AIDA_Intensity(i);
             evt.FastTime = RAW->get_AIDA_FastTime(i);
+            evt.FastTime = AIDA_Time[i];
             //if(evt.HighEnergy>0){
        // cout<<"Event AIDA " << event_number << " evt.Energy " << evt.Energy <<" evt.HighEnergy " << evt.HighEnergy <<endl;}
             if (!startTime) startTime = evt.Time;

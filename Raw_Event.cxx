@@ -389,11 +389,12 @@ int Raw_Event::get_Event_type(){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //--------------------------------------AIDA  ------------------------------------------------//
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
- void Raw_Event::set_DATA_AIDA(double* Aida_E, int* Aida_feeID, int* Aida_ChID, ULong64_t* Aida_WR, int Aida_hits, bool* Aida_veto, int* Aida_side, int* Aida_strip, int* Aida_EvtID, ULong64_t* Aida_Fast, int* Aida_ADC, std::vector<AidaScaler> const& scaler){
+ void Raw_Event::set_DATA_AIDA(double* Aida_E, int* Aida_feeID, int* Aida_ChID, ULong64_t* Aida_WR, int Aida_hits, bool* Aida_veto, int* Aida_side, int* Aida_strip, int* Aida_EvtID, ULong64_t* Aida_Fast, int* Aida_ADC, std::vector<AidaScaler> const& scaler, double* Aida_I){
 
     this->  AIDA_Hits = Aida_hits;
     for (int i =0; i< Aida_hits; i++){
         this->  AIDA_Energy[i] = Aida_E[i];
+        this->  AIDA_Intensity[i] = Aida_I[i];
         this->  AIDA_FEE[i] = Aida_feeID[i];
         this->  AIDA_CHA_ID[i] = Aida_ChID[i];
         this->  AIDA_WR[i] = Aida_WR[i];
@@ -867,6 +868,7 @@ ULong64_t Raw_Event::get_WR(){return WR;}
 //------------------------------------------ AIDA ------------------------------------------//
 
      double Raw_Event::get_AIDA_Energy(int i){return AIDA_Energy[i];}
+     double Raw_Event::get_AIDA_Intensity(int i){return AIDA_Intensity[i];}
      int Raw_Event::get_AIDA_FEE_ID(int i){return AIDA_FEE[i];}
      int Raw_Event::get_AIDA_CHA_ID(int i){return AIDA_CHA_ID[i];}
      int Raw_Event::get_AIDA_HITS(){return AIDA_Hits;}

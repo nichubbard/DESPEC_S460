@@ -43,9 +43,11 @@ AIDA_Detector_System::AIDA_Detector_System()
   stats_d.resize(conf->FEEs());
   pauseTimes.resize(conf->FEEs());
   scaler.resize(conf->FEEs());
+  dssdGains.resize(conf->DSSDs());
 
 
   Energy = new double[AIDA_MAX_HITS];
+  Intensity = new double[AIDA_MAX_HITS];
   FEE_ID =  new int[AIDA_MAX_HITS];
   Ch_ID = new int[AIDA_MAX_HITS];
   Time = new ULong64_t [AIDA_MAX_HITS];
@@ -60,6 +62,7 @@ AIDA_Detector_System::AIDA_Detector_System()
   for (int i = 0; i < AIDA_MAX_HITS; i++)
   {
     Energy[i] = 0;
+    Intensity[i] = 0;
     FEE_ID[i] = 0;
     Ch_ID[i] = 0;
     Time[i] = 0;
@@ -87,6 +90,14 @@ AIDA_Detector_System::AIDA_Detector_System()
     scaler[i] = 0;
     memset(&stats_d[i], 0, sizeof(UnpackProcStats));
   }
+  for (int i = 0; i < conf->DSSDs(); ++i)
+  {
+    //auto const& info = conf->DSSD(i);
+    dssdGains[i][0].resize(128);
+    dssdGains[i][1].resize(128);
+    std::fill(dssdGains[i][0].begin(), dssdGains[i][0].end(), 0.7);
+    std::fill(dssdGains[i][1].begin(), dssdGains[i][1].end(), 0.7);
+  }
 
   upperTime48 = 0;
   upperTime63 = 0;
@@ -94,7 +105,14 @@ AIDA_Detector_System::AIDA_Detector_System()
   memset(&stats, 0, sizeof(UnpackProcStats));
 
 
-
+  // Default gains to nominal 0.7 keV/channel
+  for(int i = 0; i < conf->DSSDs(); i++)
+  {
+    dssdGains[i][0].resize(conf->Wide() ? 386 : 128);
+    dssdGains[i][1].resize(128);
+    std::fill(dssdGains[i][0].begin(), dssdGains[i][0].end(), 0.7);
+    std::fill(dssdGains[i][1].begin(), dssdGains[i][1].end(), 0.7);
+  }
 }
 
 //---------------------------------------------------------------
@@ -124,7 +142,7 @@ void AIDA_Detector_System::get_Event_data(Raw_Event* RAW){
     std::cout << " Extra Hits will be ignored" << std::endl;
     Hits = AIDA_MAX_HITS;
   }
-  RAW->set_DATA_AIDA(Energy, FEE_ID, Ch_ID, Time, Hits, HighE_veto, Side, Strip, EvtID, FastTime, AdcData, ScalerData);
+  RAW->set_DATA_AIDA(Energy, FEE_ID, Ch_ID, Time, Hits, HighE_veto, Side, Strip, EvtID, FastTime, AdcData, ScalerData, Intensity);
 }
 //---------------------------------------------------------------
 
@@ -164,6 +182,27 @@ if(get_newfile()==1 || stats.MBSEvents==1){
   }
   TGo4Log::Info("AIDA: Loaded ADC Offsets");
   fs.close();
+
+  fs.open("Configuration_Files/AIDA/AIDA_gains.txt");
+  fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  while (fs)
+  {
+    if (fs.peek() == '#')
+    {
+      fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      continue;
+    }
+    int dssd, strip;
+    char side;
+    double offset;
+    fs >> dssd >> side >> strip >> offset;
+    if (!fs) break;
+    int sideidx = 0;
+    if (side == 'Y') sideidx = 1;
+    dssdGains[dssd][sideidx][strip] = offset;
+    fs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+  TGo4Log::Info("AIDA: Loaded DSSD Gains");
   
     
   //*************************************************************  
@@ -362,19 +401,30 @@ bool AIDA_Detector_System::BuildAIDAADCEvent(TGo4MbsSubEvent* psubevt, Int_t wor
       Strip[Hits] = FeeToStrip[channelID];
     }
 
+    if (conf->Wide() && conf->FEE(feeID).Side == conf->DSSD(evt.DSSD).XSide)
+    {
+      int shift = 0;
+      if (conf->FEE(feeID).Segment == WideAIDASegment::Centre) shift = 128;
+      if (conf->FEE(feeID).Segment == WideAIDASegment::Right) shift = 256;
+      evt.Strip += shift;
+      Strip[Hits] += shift;
+    }
+
     evt.Intensity = (evt.Data - 32768) * evt.Side;
+    evt.Intensity = (evt.Intensity - adcOffsets[feeID][channelID]);
+    Intensity[Hits] = evt.Intensity;
     // if (evt.HighEnergy)
     // test->Fill(evt.Strip + (evt.Side == -1 ? 0 : 1) * 128);
 
     if (veto == 1)
     {
-      evt.Energy = (evt.Intensity - adcOffsets[feeID][channelID]) * 0.7; // Energy in MeV
-      Energy[Hits] = (evt.Intensity - adcOffsets[feeID][channelID]) * 0.7; // Energy in MeV
+      evt.Energy = evt.Intensity * 0.7; // Energy in MeV
+      Energy[Hits] = evt.Energy;
     }
     else
     {
-      evt.Energy = (evt.Intensity- adcOffsets[feeID][channelID]) * 0.7; // Energy in keV
-      Energy[Hits] = (evt.Intensity- adcOffsets[feeID][channelID]) * 0.7; // Energy in keV
+      evt.Energy = evt.Intensity * dssdGains[evt.DSSD - 1][evt.Side == conf->DSSD(evt.DSSD - 1).XSide ? 0 : 1][evt.Strip];
+      Energy[Hits] = evt.Energy;
     }
     // delete data without an offset (bad channels)		    }
     if (!adcOffsets[feeID][channelID])
