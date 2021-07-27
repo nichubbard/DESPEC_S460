@@ -12,6 +12,13 @@ enum DSSDSide
   Ohmic = 1,
 };
 
+enum WideAIDASegment
+{
+  Left,
+  Centre,
+  Right
+};
+
 struct DSSDConfiguration
 {
   int DSSD;
@@ -19,6 +26,12 @@ struct DSSDConfiguration
   int Bottom;
   int Left;
   int Right;
+  // Wide AIDA only mappings
+  int LeftRight;
+  int CentreLeft;
+  int CentreRight;
+  int RightLeft;
+  // Side mapping
   DSSDSide XSide;
   DSSDSide YSide;
 };
@@ -28,6 +41,8 @@ struct FEEConfiguration
   int DSSD;
   DSSDSide Side;
   bool High;
+  // Wide AIDA only data
+  WideAIDASegment Segment;
 };
 
 class TAidaConfiguration
@@ -38,6 +53,7 @@ public:
 
     int FEEs() const;
     int DSSDs() const;
+    bool Wide() const;
 
     bool AdjustADC() const;
     bool ucesb() const;
@@ -64,6 +80,7 @@ private:
 
     int fees;
     int dssds;
+    bool wide;
     bool adjustadc;
     bool useucesb;
     bool ignorembsts;
@@ -103,6 +120,11 @@ inline int TAidaConfiguration::FEEs() const
 inline int TAidaConfiguration::DSSDs() const
 {
   return dssds;
+}
+
+inline bool TAidaConfiguration::Wide() const
+{
+  return wide;
 }
 
 inline bool TAidaConfiguration::AdjustADC() const

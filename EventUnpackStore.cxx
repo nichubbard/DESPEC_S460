@@ -1,4 +1,4 @@
-// Adapted for DESPEC by A.K.Mistry 2020
+// Adapted for DESPEC by A.K.Mistry and N. Hubbard 2021
 //
 //---------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
@@ -19,25 +19,26 @@
 
 //***********************************************************
 EventUnpackStore::EventUnpackStore() :
-        TGo4EventElement()
+  TGo4EventElement()
 {
-     //   cout << "**** EventUnpackStore: Create instance" << endl;
+  //   cout << "**** EventUnpackStore: Create instance" << endl;
 }
 //***********************************************************
 EventUnpackStore::EventUnpackStore(const char* name) :
-        TGo4EventElement(name)
+  TGo4EventElement(name)
 {
-       // cout << "**** EventUnpackStore: Create instance " << name << endl;
+  // cout << "**** EventUnpackStore: Create instance " << name << endl;
 }
 //***********************************************************
 EventUnpackStore::~EventUnpackStore()
 {
-      // cout << "**** EventUnpackStore: Delete instance " << endl;
+  // cout << "**** EventUnpackStore: Delete instance " << endl;
 }
 
 //-----------------------------------------------------------
 void  EventUnpackStore::Clear(Option_t *t)
 {
+  if (fFRS_WR != 0) {
     ///FRS
     ZERO_ARRAY(fFRS_Music_dE);
     ZERO_ARRAY(fFRS_Music_dE_corr);
@@ -84,122 +85,137 @@ void  EventUnpackStore::Clear(Option_t *t)
     fFRS_beta = 0;
     fFRS_tof4121=0;
     fFRS_tof4221=0;
-//    fFRS_beta3 = 0;
+    //    fFRS_beta3 = 0;
     fFRS_gamma = 0;
-   fFRS_AoQ = 0;
-   fFRS_AoQ_corr = 0;
-   fFRS_z = 0;
-   fFRS_z2 = 0;
-   fFRS_dEdeg = 0;
-   fFRS_dEdegoQ = 0;
-   
-   fFRS_AoQ_mhtdc= 0;
-   fFRS_AoQ_corr_mhtdc= 0;
-   fFRS_z_mhtdc= 0;
-   fFRS_z2_mhtdc= 0;
-   fFRS_dEdeg_mhtdc= 0;
-   fFRS_dEdegoQ_mhtdc= 0;
-   fFRS_beta_mhtdc= 0;
-   fFRS_tof4121_mhtdc= 0;
-   fFRS_tof4221_mhtdc= 0;
-//   fFRS_z3 = 0;
-   /*fFRS_timestamp = 0;
-   fFRS_ts = 0;
-   fFRS_ts2 = 0; */  
-   fFRS_WR = 0;
-   fAIDAHits = 0;
-    
-   ///Aida
+    fFRS_AoQ = 0;
+    fFRS_AoQ_corr = 0;
+    fFRS_z = 0;
+    fFRS_z2 = 0;
+    fFRS_dEdeg = 0;
+    fFRS_dEdegoQ = 0;
+
+    fFRS_AoQ_mhtdc= 0;
+    fFRS_AoQ_corr_mhtdc= 0;
+    fFRS_z_mhtdc= 0;
+    fFRS_z2_mhtdc= 0;
+    fFRS_dEdeg_mhtdc= 0;
+    fFRS_dEdegoQ_mhtdc= 0;
+    fFRS_beta_mhtdc= 0;
+    fFRS_tof4121_mhtdc= 0;
+    fFRS_tof4221_mhtdc= 0;
+    //   fFRS_z3 = 0;
+    /*fFRS_timestamp = 0;
+      fFRS_ts = 0;
+      fFRS_ts2 = 0; */  
+  }
+  fFRS_WR = 0;
+
+
+  if (fAIDA_WR != 0) {
+    ///Aida
+    fAIDAHits = 0;
     AIDATime = 0;
     AIDAHits = 0;
     Aida.clear();
     fAidaScalers.clear();
-    fAIDA_WR =0;   
-    fevent_number = 0;
-    fTrigger=0;
-    memset(fProcID, -1, sizeof(fProcID));
-///Fatima VME
-        fScalar_fired = -1;
-        fScalar_ID = -1;
-        fFat_TMCh1mult = 0;
-        fFat_TMCh1mult = 0;
-        
-            ZERO_ARRAY(fFat_TDC_ID);
-            ZERO_ARRAY(fFat_QDC_ID);
-            ZERO_ARRAY(fFat_QDC_E);
-            ZERO_ARRAY(fFat_QDC_E_Raw);
-            ZERO_ARRAY(fFat_QDC_T_coarse);
-            ZERO_ARRAY(fFat_QDC_T_fine);
-            ZERO_ARRAY(fSC40);
-            ZERO_ARRAY(fSC41);
-            ZERO_ARRAY(fFat_TMCh1);
-            ZERO_ARRAY(fFat_TMCh2);
-            ZERO_ARRAY(fFat_bplastChanT);
-            ZERO_ARRAY(fFat_TDC_Multiplicity);
-            ZERO_ARRAY(fFat_TDC_Time);
-            ZERO_ARRAY(fFat_TDC_Time_Raw);
+  }
+  fAIDA_WR =0;   
+  fevent_number = 0;
+  fTrigger=0;
+  memset(fProcID, -1, sizeof(fProcID));
+  ///Fatima VME
+  //
+  if (fFat_WR != 0) {
+    fScalar_fired = -1;
+    fScalar_ID = -1;
+    fFat_TMCh1mult = 0;
+    fFat_TMCh1mult = 0;
 
-            ZERO_ARRAY(fFat_TDC_Singles_ID);
-            ZERO_ARRAY(fFat_TDC_Singles_t);
-            ZERO_ARRAY(fFat_TDC_Singles_t_Raw); 
-            ZERO_ARRAY(fFat_QDC_Singles_ID);
-            ZERO_ARRAY(fFat_QDC_Singles_E);
-            ZERO_ARRAY(fFat_QDC_Singles_E_Raw);
-            ZERO_ARRAY(fFat_QDC_Singles_t_coarse);
-            ZERO_ARRAY(fFat_QDC_Singles_t_fine);
-            fFat_tdcsinglescount=0;
-            fFat_qdcsinglescount=0; 
-                  
-            
-            fFat_WR = 0;
-            fFat_QDC_Multiplicity = 0;
-            fFat_SC40mult = 0;
-            fFat_SC41mult = 0;
-	        fFat_mult=0;
-      ///Galilieo
-//             fGe_Pileup = 0;
-            fGe_fired = 0;
-            fGe_WR = 0;
+    ZERO_ARRAY(fFat_TDC_ID);
+    ZERO_ARRAY(fFat_QDC_ID);
+    ZERO_ARRAY(fFat_QDC_E);
+    ZERO_ARRAY(fFat_QDC_E_Raw);
+    ZERO_ARRAY(fFat_QDC_T_coarse);
+    ZERO_ARRAY(fFat_QDC_T_fine);
+    ZERO_ARRAY(fSC40);
+    ZERO_ARRAY(fSC41);
+    ZERO_ARRAY(fFat_TMCh1);
+    ZERO_ARRAY(fFat_TMCh2);
+    ZERO_ARRAY(fFat_bplastChanT);
+    ZERO_ARRAY(fFat_TDC_Multiplicity);
+    ZERO_ARRAY(fFat_TDC_Time);
+    ZERO_ARRAY(fFat_TDC_Time_Raw);
 
-        ZERO_ARRAY(fGe_Detector);
-        ZERO_ARRAY(fGe_Crystal);
-        ZERO_ARRAY(fGe_E);
-        ZERO_ARRAY(fGe_T);
-        ZERO_ARRAY(fGe_cfT);
-        ZERO_ARRAY(fGe_Pileup);
-        ZERO_ARRAY(fGe_Overflow);
-      
-///Finger
-        fFinger_WR = 0;
-        ZERO_ARRAY(fFing_SC41_lead);
-        ZERO_ARRAY(fFing_SC41_trail);
-        ZERO_ARRAY(fFing_Strip_N);
-        ZERO_ARRAY(fFing_Strip_N_LU);
-        ZERO_ARRAY(fFing_Strip_N_TU);
-        ZERO_ARRAY(fFing_Strip_N_LD);
-        ZERO_ARRAY(fFing_Strip_N_TD);
-        ZERO_ARRAY(fFing_PMT_Lead_N);
-        ZERO_ARRAY(fFing_PMT_Trail_N);
-        ZERO_ARRAY(fFing_Lead_Up);
-        ZERO_ARRAY(fFing_Lead_Down);
-        
-        ///Fatima Tamex
-        ZERO_ARRAY(fFat_Fast_Lead_N);
-        ZERO_ARRAY(fFat_Slow_Lead_N);
-        ZERO_ARRAY(fFat_Fast_Trail_N);
-        ZERO_ARRAY(fFat_Slow_Trail_N);
-        ZERO_ARRAY(fFat_Lead_Fast);
-        ZERO_ARRAY(fFat_Lead_Slow);
-        ZERO_ARRAY(fFat_Trail_Fast);
-        ZERO_ARRAY(fFat_Trail_Slow);
-        fFat_Tamex_WR=0;
-        
-        ///bPlastic Tamex
-        fbPlas_WR = 0;
-        ZERO_ARRAY(fbPlasChan);
-        fbPlasDetNum=-1;
-        ZERO_ARRAY(fbPlas_PMT_Lead_N);
-        ZERO_ARRAY(fbPlas_PMT_Trail_N);
-        ZERO_ARRAY(fbPlas_Lead_PMT);
-        ZERO_ARRAY(fbPlas_Trail_PMT);
+    ZERO_ARRAY(fFat_TDC_Singles_ID);
+    ZERO_ARRAY(fFat_TDC_Singles_t);
+    ZERO_ARRAY(fFat_TDC_Singles_t_Raw); 
+    ZERO_ARRAY(fFat_QDC_Singles_ID);
+    ZERO_ARRAY(fFat_QDC_Singles_E);
+    ZERO_ARRAY(fFat_QDC_Singles_E_Raw);
+    ZERO_ARRAY(fFat_QDC_Singles_t_coarse);
+    ZERO_ARRAY(fFat_QDC_Singles_t_fine);
+    fFat_tdcsinglescount=0;
+    fFat_qdcsinglescount=0; 
+
+
+    fFat_QDC_Multiplicity = 0;
+    fFat_SC40mult = 0;
+    fFat_SC41mult = 0;
+    fFat_mult=0;
+  }
+  fFat_WR = 0;
+  ///Galilieo
+  //             fGe_Pileup = 0;
+  if (fGe_WR != 0) {
+    fGe_fired = 0;
+    ZERO_ARRAY(fGe_Detector);
+    ZERO_ARRAY(fGe_Crystal);
+    ZERO_ARRAY(fGe_E);
+    ZERO_ARRAY(fGe_T);
+    ZERO_ARRAY(fGe_cfT);
+    ZERO_ARRAY(fGe_Pileup);
+    ZERO_ARRAY(fGe_Overflow);
+  }
+  fGe_WR = 0;
+
+  ///Finger
+  if (fFinger_WR != 0) {
+    ZERO_ARRAY(fFing_SC41_lead);
+    ZERO_ARRAY(fFing_SC41_trail);
+    ZERO_ARRAY(fFing_Strip_N);
+    ZERO_ARRAY(fFing_Strip_N_LU);
+    ZERO_ARRAY(fFing_Strip_N_TU);
+    ZERO_ARRAY(fFing_Strip_N_LD);
+    ZERO_ARRAY(fFing_Strip_N_TD);
+    ZERO_ARRAY(fFing_PMT_Lead_N);
+    ZERO_ARRAY(fFing_PMT_Trail_N);
+    ZERO_ARRAY(fFing_Lead_Up);
+    ZERO_ARRAY(fFing_Lead_Down);
+  }
+  fFinger_WR = 0;
+
+  ///Fatima Tamex
+  if (fFat_Tamex_WR != 0) {
+    ZERO_ARRAY(fFat_Fast_Lead_N);
+    ZERO_ARRAY(fFat_Slow_Lead_N);
+    ZERO_ARRAY(fFat_Fast_Trail_N);
+    ZERO_ARRAY(fFat_Slow_Trail_N);
+    ZERO_ARRAY(fFat_Lead_Fast);
+    ZERO_ARRAY(fFat_Lead_Slow);
+    ZERO_ARRAY(fFat_Trail_Fast);
+    ZERO_ARRAY(fFat_Trail_Slow);
+  }
+  fFat_Tamex_WR=0;
+
+  ///bPlastic Twin Peaks
+  if (fbPlas_WR != 0) {
+    ///bPlastic Tamex
+    ZERO_ARRAY(fbPlasChan);
+    fbPlasDetNum=-1;
+    ZERO_ARRAY(fbPlas_PMT_Lead_N);
+    ZERO_ARRAY(fbPlas_PMT_Trail_N);
+    ZERO_ARRAY(fbPlas_Lead_PMT);
+    ZERO_ARRAY(fbPlas_Trail_PMT);
+  }
+  fbPlas_WR = 0;
 }

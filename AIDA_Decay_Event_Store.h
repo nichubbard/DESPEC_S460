@@ -25,7 +25,7 @@ public:
   int DSSD;
   int Side;
   int Strip;
-  int Intensity; /* ADC Data corrected for polarity */
+  double Intensity; /* ADC Data corrected for polarity and offset */
   double Energy;
 
 
@@ -46,6 +46,7 @@ public:
   int DSSD;
   int Side;
   bool HighEnergy;
+  double Intensity;
   double Energy;
   double Strip;
   int64_t Time;

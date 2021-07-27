@@ -369,6 +369,7 @@ class EventAnlProc : public TGo4EventProcessor {
             std::vector<TH1*> decays_strip_1d;
             std::vector<TH1*> decays_per_event;
             std::vector<TH1*> decays_channels;
+            TH1* pulser_energy;
 
              std::vector<AidaCluster> EventsToClusters(std::vector<AidaEvent> const&);
             AidaHit ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const&);
