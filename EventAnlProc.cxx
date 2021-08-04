@@ -929,7 +929,38 @@ void EventAnlProc::Make_FRS_Histos(){
 void EventAnlProc::Do_FRS_Histos(EventAnlStore* pOutput){
     FRS_time_mins = 0;
     
-    if(pOutput->pFRS_WR>0) FRS_time_mins =(pOutput->pFRS_WR/60E9)-26900000;
+    if(pOutput->pFRS_WR>0) FRS_time_mins =(pOutput->pFRS_WR/60E9)-(1618551297094851800/60E9);
+    
+    
+    
+    
+//------------------------------------------------------------------------------------------------//    
+   
+    Float_t FRS_WR_b =0;
+    Float_t Z1_shift_value =0;
+    
+    if(FRS_z>0){
+     for(int i=0; i<190;i++){
+         
+	 if(i==0){
+	 if(FRS_time_mins >= 0 && FRS_time_mins < fCal->FRSWR_End[i]){
+            FRS_z = FRS_z - fCal->Z1_Shift[i]; 
+	 }
+	 }
+	 
+	 if(i>0){
+         if(FRS_time_mins >= fCal->FRSWR_End[i-1] && FRS_time_mins < fCal->FRSWR_End[i]){
+            FRS_z = FRS_z - fCal->Z1_Shift[i]; 
+       }     
+       }  
+       
+      }
+     
+     }
+     
+  
+   //------------------------------------------------------------------------------------------------//  
+    
     
     ///Defined in the setup file.
      if(FRS_CORR==true) FRS_AoQ = FRS_AoQ_corr;

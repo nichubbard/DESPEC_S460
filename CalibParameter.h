@@ -38,6 +38,9 @@ public:
 //  Double_t Ab[32], Bb[32];
 //  Double_t Ag[4], Bg[4];
 
+ Double_t FRSWR_End[500];
+ Double_t Z1_Shift[500];
+
 ClassDef(CalibParameter,5)
 };
 

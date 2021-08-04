@@ -3969,14 +3969,14 @@ void FRS_Detector_System::FRS_Anal(){
   if (sci_b_x[2]){//sc21
     id_x2 = sci_x[2];
     id_y2 = 0.0;
-    id_a2 = 0.0;
+    id_a2 = (sci_x[3]-sci_x[2])/(frs->dist_SC22-frs->dist_SC21)*1000.;
     id_b2 = 0.0;
   }
   }else if(3 == id->x_s2_select){
     if (sci_b_x[3]){//sc22
       id_x2 = sci_x[3];
       id_y2 = 0.0;
-      id_a2 = 0.0;
+      id_a2 = (sci_x[3]-sci_x[2])/(frs->dist_SC22-frs->dist_SC21)*1000.;
       id_b2 = 0.0;
     }
   }
@@ -4097,8 +4097,8 @@ void FRS_Detector_System::FRS_Anal(){
     
      // cout<<"FRS Calc id_AoQ " << id_AoQ <<" id_AoQ_corr "<<id_AoQ_corr <<" id_a2 " <<id_a2 <<  endl;
       
-      // if (!b_tpc_xy[4] || !b_tpc_xy[5]) // no sense to do "if TPC4142 dont work, correct with S4 angle ... "
-      //   id_AoQ_corr = id_AoQ - id->a4AoQCorr * id_a4;
+       if (!b_tpc_xy[4] || !b_tpc_xy[5]) // no sense to do "if TPC4142 dont work, correct with S4 angle ... "
+         id_AoQ_corr = id_AoQ - id->a4AoQCorr * id_a4;
 //        if(bDrawHist)
 //          {
 //            hID_AoQ->Fill(id_AoQ);
