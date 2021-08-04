@@ -58,6 +58,14 @@ CalibParameter::CalibParameter()
        Ge_T_align_par[i]=0;
        Ge_cfd_align_par[i]=0;
         } 
+	
+	for (i = 0; i<500;i++){
+       
+       FRSWR_End[i] =0;
+       Z1_Shift[i] =0;
+       
+    }
+	
     } 
 
   //----------------------------------------------

@@ -214,15 +214,15 @@ void setup_s460_10()
   id->vel_a3[3] =  0.0;
   
   //TOF_SC42_SC21_TAC 06.03.21 Pb s452
-  //id->id_tofoff3  = 187701.;   // offset (ps)
-  id->id_tofoff3  = 181690.;   // offset (ps)
-  //id->id_path3    = 134732.;   // path/c [ps]
-  id->id_path3    = 127749.;   // path/c [ps
+  id->id_tofoff3  = 187701.;   // offset (ps)
+  //id->id_tofoff3  = 181690.;   // offset (ps)
+  id->id_path3    = 134732.;   // path/c [ps]
+  //id->id_path3    = 127749.;   // path/c [ps
   
 
   //TOF_SC41_SC21_TAC 16.04.21 U s460
-  id->id_tofoff2 =  176384.;  // offset (ps)
-  id->id_path2   =  123877.;  // path/c (ps)
+   id->id_tofoff2 =  181690.;  // offset (ps)
+   id->id_path2   =  127749.;  // path/c (ps)
 
   //TOF_SC41_SC22_TAC 16.04.21 U s460
   //id->id_tofoff5 =  168010.;  // offset (ps) 
@@ -743,8 +743,8 @@ void setup_s460_10()
   //===========
 
   //index 2 for Sc21
-  sci->x_a[0][2] =    477.29;  // quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][2] =   -0.2619;  // quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][2] =    244.14;  // MARTA: s460
+  sci->x_a[1][2] =   -0.1279;  // MARTA: s460
   sci->x_a[2][2] =  0.000000;  //
   sci->x_a[3][2] =  0.000000;  //
   sci->x_a[4][2] =  0.000000;  //
@@ -754,8 +754,8 @@ void setup_s460_10()
   //index 3 for Sc22
  // sci->x_a[0][3] =  1370;  //quickly done with run 0139
  // sci->x_a[1][3] =  -0.7;  //
-  sci->x_a[0][3] =  627.52;  // quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][3] = -0.3751;  //quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][3] =  413.579;  // MARTA: s460
+  sci->x_a[1][3] = -0.309586;  //MARTA: s460
   sci->x_a[2][3] =  0.0000;  //
   sci->x_a[3][3] =  0.000000;  //
   sci->x_a[4][3] =  0.000000;  //
@@ -763,8 +763,8 @@ void setup_s460_10()
   sci->x_a[6][3] =  0.000000;  //
 
   // index 5 for Sc41
-  sci->x_a[0][5] = 641.56;  //  quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][5] = -0.2782;  // quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][5] = 743.488;  //  MARTA: s460
+  sci->x_a[1][5] = -0.312087;  // MARTA: s460
   sci->x_a[2][5] = 0.0000;   //
   sci->x_a[3][5] = 0.000000;   //
   sci->x_a[4][5] = 0.000000;   //
@@ -849,13 +849,13 @@ void setup_s460_10()
   sci->tof_bll4  = 1.;    // not used online
   sci->tof_brr4  = 1.;    // not used online
 
-  sci->tof_a2 = 146.46; // [ps] offset   Tof S41-S21
+  sci->tof_a2 = 0; // [ps] offset   Tof S41-S21
   sci->tof_a3 = 0.; // [ps] offset   Tof S42-S21
   sci->tof_a4 = 0.; // [ps] offset   Tof S81-S21
 
   // for VFTX
-  sci->vftx_offset_2141  =  -70; //ns // s452 Pb 210311
-  sci->vftx_offset_2241  =  -55; //ns // s452 Pb 210311
+  sci->vftx_offset_2141  =  -185.44; //ns // s460 U 210419
+  sci->vftx_offset_2241  =  -168.77; //ns // s460 U 210419
   
   // for multihitTDC
   sci->mhtdc_factor_ch_to_ns =  0.025;// tp be set in parameter...
@@ -866,12 +866,12 @@ void setup_s460_10()
   sci->mhtdc_offset_31l_31r  =  0.0;              sci->mhtdc_factor_31l_31r = 60.0; // pos = offset + factor*dt
   sci->mhtdc_offset_81l_81r  =  -410.411;         sci->mhtdc_factor_81l_81r = 43.691; // pos = offset + factor*dt
   sci->mhtdc_offset_22l_22r  =  -39.6625+20.0;    sci->mhtdc_factor_22l_22r = 62.5341;  // pos = offset + factor*dt
-  sci->mhtdc_offset_41_21  =  182.4; //ns // s530 U 210330
+  sci->mhtdc_offset_41_21  =  181.2; //ns // s460 MARTA
   sci->mhtdc_offset_42_21  =  163.79; //ns // s452 Pb 210311
   sci->mhtdc_offset_43_21  =  0.0; //ns
   sci->mhtdc_offset_31_21  =  0.0; //ns
   sci->mhtdc_offset_81_21  =  -400.0 + 165.214; //ns
-  sci->mhtdc_offset_41_22  =  266.9; //ns // s452 Pb 210311
+  sci->mhtdc_offset_41_22  =  271.95; //ns // s460 MARTA
 
   //---- initial value for Z vs AoQ PID -----//
   id->ID_Z_AoverQ_num[0]=5;
