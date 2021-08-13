@@ -2249,17 +2249,17 @@ if(Fatmult > 0){
       pOutput->pSC40mult =  SC40mult;
       pOutput->pSC41mult =  SC41mult; 
  
-        for(int i = 0; i < SC40mult; i++){
+         for(int k = 0; k < SC40mult; k++){
             
-            pOutput->pSC40[i] = SC40[i];    
+            pOutput->pSC40[k] = SC40[k];    
             
         }//End sc40 for fill
         
-        for(int i = 0; i < SC41mult; i++){
+        for(int k = 0; k < SC41mult; k++){
             
-            pOutput->pSC41[i] = SC41[i];    
+            pOutput->pSC41[k] = SC41[k];    
             
-        }//End sc41 for fill        
+        }//End sc41 for fill         
     }     
   //  cout<<"pInput->fFat_TMCh1mult " << pInput->fFat_TMCh1mult <<endl;
     for(int i =0; i<pInput->fFat_TMCh1mult; i++)  pOutput->pFat_TMCh1[i] = pInput->fFat_TMCh1[i];
