@@ -224,21 +224,23 @@ private:
 	
 	//FATIMA TAMEX
     int     amount_hit_tamex_fat;
-    int     iterator_fat[4];
+    int     iterator_fat[5];
     double  trigger_coarse_fat[100];
     double  trigger_fine_fat[100];
-    int     leading_array_fat[4][100];
-    int     leading_hits_fat[4];
-    int     trailing_hits_fat[4];
-    int     phys_channel_fat[4][100];
-    int     leading_hits_ch_fat[4][100];
-    int     trailing_hits_ch_fat[4][100];
-    UInt    ch_ID_fat[4][100];
-    double  coarse_T_edge_lead_fat[4][100];
-    double  coarse_T_edge_trail_fat[4][100];
-    double  fine_T_edge_lead_fat[4][100];
-    double  fine_T_edge_trail_fat[4][100];
-    bool    fired_tamex_fat[4];
+    int     leading_array_fat[5][100];
+    int     leading_hits_fat[5];
+    int     trailing_hits_fat[5];
+    int     phys_channel_fat[5][100];
+    int     leading_hits_ch_fat[5][100];
+    int     trailing_hits_ch_fat[5][100];
+    UInt    ch_ID_fat[5][100];
+    double  coarse_T_edge_lead_fat[5][100];
+    double  coarse_T_edge_trail_fat[5][100];
+    double  fine_T_edge_lead_fat[5][100];
+    double  fine_T_edge_trail_fat[5][100];
+    bool    fired_tamex_fat[5];
+    UInt epoch_ch_leading[5][100];
+    UInt epoch_ch_trailing[5][100];
 
 
 	//bPlastic
@@ -263,7 +265,7 @@ private:
     double      fine_T_edge_lead[FINGER_TAMEX_MODULES][FINGER_TAMEX_HITS];
     double      fine_T_edge_trail[FINGER_TAMEX_MODULES][FINGER_TAMEX_HITS];
 
-    bool fired_tamex[4];
+    bool fired_tamex[5];
 
 	bool VME_Event;
 
@@ -358,7 +360,7 @@ public:
                          ULong64_t*,double*,
                          ULong64_t*,double*,
                          int*,int*);
-    void set_DATA_FATIMA_TAMEX(int*,double**,double**,UInt**,double*,double*,int,int**);
+   void set_DATA_FATIMA_TAMEX(int*,double**,double**,UInt**,double*,double*,int,int**,uint**,uint**);
 
     void set_DATA_FINGER(int*,double**,double**,UInt**,double*,double*,int,int**);
 

@@ -642,11 +642,16 @@ void Raw_Event::set_DATA_FATIMA(int QDC_FIRED,int TDC_FIRED,
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //-------------------------------------- FATIMA TAMEX  ------------------------------------------------//
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Raw_Event::set_DATA_FATIMA_TAMEX(int* it_fat,double** Edge_Coarse_fat,double** Edge_fine_fat,UInt** ch_ed_fat,double* Coarse_Trigger_fat,double* Fine_Trigger_fat,int amount_hit_tamex_fat, int** Lead_Arr_fat){
+void Raw_Event::set_DATA_FATIMA_TAMEX(int* it_fat,double** Edge_Coarse_fat,double** Edge_fine_fat,UInt** ch_ed_fat,double* Coarse_Trigger_fat,double* Fine_Trigger_fat,int amount_hit_tamex_fat, int** Lead_Arr_fat, uint** Epoch_data_ch_leading, uint** Epoch_data_ch_trailing){
 
+    uint  epoch_lead_first = 0;
+    uint epoch_lead_diff = 0;
+    uint  epoch_trail_first = 0;
+    uint epoch_trail_diff = 0;
+    
     this->amount_hit_tamex_fat = amount_hit_tamex_fat;
     //reset lead and trail hits
-    for(int i = 0;i < amount_hit_tamex;i++){
+    for(int i = 0;i < 5;i++){
         iterator_fat[i] = 0;
         for(int j = 0;j < 32;j++){
             leading_hits_ch_fat[i][j] = 0;
@@ -658,7 +663,37 @@ void Raw_Event::set_DATA_FATIMA_TAMEX(int* it_fat,double** Edge_Coarse_fat,doubl
     }
 
     //loop over all 4 tamex modules
+     for(int i = 0;i < amount_hit_tamex_fat;i++){
+     for(int j = 0;j < it_fat[i];++j){
+         ///Lead epoch 
+            if(ch_ed_fat[i][j] <33 && j % 2 == 0){
+           
+                
+               if(epoch_lead_first==0)  epoch_lead_first= Epoch_data_ch_leading[i][j];
+                if(epoch_lead_first> Epoch_data_ch_leading[i][j]){
+
+                    epoch_lead_first= Epoch_data_ch_leading[i][j];
+    
+                    }
+                }
+                 ///Trail epoch 
+                  
+                      if(ch_ID_fat[i][j] >33 && j % 2 == 1 ){
+               
+                
+               if(epoch_trail_first==0) { epoch_trail_first= Epoch_data_ch_trailing[i][j];
+               }
+
+               
+                if(epoch_trail_first> Epoch_data_ch_trailing[i][j] &&Epoch_data_ch_trailing[i][j]!=0 ){
+
+                    epoch_trail_first= Epoch_data_ch_trailing[i][j];
+                    }                   
+                }
+            }
+         }
     for(int i = 0;i < amount_hit_tamex_fat;i++){
+        if(i<4){
         iterator_fat[i] = it_fat[i];
         trigger_coarse_fat[i] = Coarse_Trigger_fat[i];
         trigger_fine_fat[i] = Fine_Trigger_fat[i];
@@ -667,24 +702,33 @@ void Raw_Event::set_DATA_FATIMA_TAMEX(int* it_fat,double** Edge_Coarse_fat,doubl
         trailing_hits_fat[i] = 0;
 
         for(int j = 0;j < iterator_fat[i];++j){
+            
+           // cout<<"RAW i " << i << " j " << j << endl;
             ch_ID_fat[i][j] = ch_ed_fat[i][j];
             leading_array_fat[i][j] = Lead_Arr_fat[i][j];
          //   cout<<"ch_ID_fat[i][j] " <<ch_ID_fat[i][j] << " i " << i << " j " << j << " j % 2 " <<j % 2 << endl;
             
             if(ch_ID_fat[i][j] <33 && j % 2 == 0){
-
-                coarse_T_edge_lead_fat[i][j] = (double) Edge_Coarse_fat[i][j];
+                epoch_ch_leading[i][j] = Epoch_data_ch_leading[i][j];
+                epoch_lead_diff = (epoch_ch_leading[i][j]-epoch_lead_first);
+                coarse_T_edge_lead_fat[i][j] = (double) Edge_Coarse_fat[i][j]+(epoch_lead_diff*10240/5);
+               // coarse_T_edge_lead_fat[i][j] = (double) Edge_Coarse_fat[i][j];
                 fine_T_edge_lead_fat[i][j] = (double) Edge_fine_fat[i][j];
 
                 phys_channel_fat[i][j] = (ch_ID_fat[i][j]);
-           // cout <<"LEAD RAW Ch " << ch_ID_fat[i][j] <<" phys_channel_fat[i][j] " << phys_channel_fat[i][j]<<" coarse_T_edge_lead_fat[i][j] " <<coarse_T_edge_lead_fat[i][j] <<" fine_T_edge_lead_fat[i][j] " <<fine_T_edge_lead_fat[i][j] <<" i " << i << " j " << j <<   endl;
+           
                 leading_hits_fat[i]++;
                 leading_hits_ch_fat[i][phys_channel_fat[i][j]]++;
-                  // cout <<"RAW Lead" << "coarse_T_edge_lead_fat[i][j] " << coarse_T_edge_lead_fat[i][j] << " fine_T_edge_lead_fat[i][j] " <<fine_T_edge_lead_fat[i][j] <<" phys_channel_fat[i][j] " <<phys_channel_fat[i][j]<< " i " << i << " j " << j << endl;
+                  
                  }
             if(ch_ID_fat[i][j] >33 && j % 2 == 1 ){
 
-                coarse_T_edge_trail_fat[i][j] = (double)  Edge_Coarse_fat[i][j];
+                epoch_ch_trailing[i][j] = Epoch_data_ch_trailing[i][j];
+                epoch_trail_diff = (epoch_ch_trailing[i][j]-epoch_trail_first);
+                
+                 coarse_T_edge_trail_fat[i][j] = (double)  Edge_Coarse_fat[i][j]+(epoch_trail_diff*10240/5);
+                 
+              //  coarse_T_edge_trail_fat[i][j] = (double)  Edge_Coarse_fat[i][j];
                 fine_T_edge_trail_fat[i][j] =(double)  Edge_fine_fat[i][j];
 
                 trailing_hits_fat[i]++;
@@ -694,6 +738,7 @@ void Raw_Event::set_DATA_FATIMA_TAMEX(int* it_fat,double** Edge_Coarse_fat,doubl
 		}
                // cout <<"TRAIL RAW Ch " << ch_ID_fat[i][j] <<" phys_channel_fat[i][j] " << phys_channel_fat[i][j]<<" coarse_T_edge_trail_fat[i][j] " <<coarse_T_edge_trail_fat[i][j] <<" fine_T_edge_trail_fat[i][j] " <<fine_T_edge_trail_fat[i][j] <<" i " << i << " j " << j <<   endl;
                //cout <<"RAW Trail" << "coarse_T_edge_trail_fat[i][j] " << coarse_T_edge_trail_fat[i][j] << " fine_T_edge_trail_fat[i][j] " <<fine_T_edge_trail_fat[i][j] << " i " << i << " j " << j << endl;
+            }
           }
         }
     }

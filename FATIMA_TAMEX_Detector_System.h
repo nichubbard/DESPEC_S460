@@ -56,8 +56,8 @@ private:
     ULong Pre_Trigger_Window;
     ULong Post_Trigger_Window;
 
-    int** leading_hits;
-    int** trailing_hits;
+//     int** leading_hits;
+//     int** trailing_hits;
 
     int** lead_arr;
 
@@ -65,9 +65,11 @@ private:
     double** edge_coarse;
     double** edge_fine;
     unsigned int** ch_ID_edge;
-    
-    unsigned int ch_ID_edge_lead[100][100];
-    unsigned int ch_ID_edge_trail[100][100];
+    unsigned int** epoch_data_ch_leading;
+    unsigned int** epoch_data_ch_trailing;
+    int data1;
+//     unsigned int ch_ID_edge_lead[100][100];
+//     unsigned int ch_ID_edge_trail[100][100];
     
 //     double** edge_coarse_slow;
 //     double** edge_fine_slow;
@@ -112,7 +114,7 @@ public:
 
     void write(){return;};
     void set_Gain_Match_Filename(std::string){return;};
-
+    unsigned int epoch_data;
 };
 
 
