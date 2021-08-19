@@ -193,7 +193,7 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
         }
 
         create = true;
-        Do_WR_Histos(pInput);
+        Process_WR_Histos(pInput);
         Fat_TimeCorrection(pInput);
                  /** Now extract the data from the stored Unpacker array (root tree)**/
     ///--------------------------------------/**FRS Input**/------------------------------------------///
@@ -323,7 +323,7 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
 //         FRS_ts = pInput->fFRS_ts;
 //         FRS_ts2 = pInput->fFRS_ts2;
  // if(pOutput->pEvent_Number==42715 ){       }
-  Do_FRS_Histos(pOutput);
+  Process_FRS_Histos(pOutput);
             }
 
 
@@ -391,13 +391,13 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
                         }      
                     }
               }
-  Do_Plastic_Tamex_Histos(pInput,pOutput);
+  Process_Plastic_Tamex_Histos(pInput,pOutput);
     
    }
   
   ///--------------------------------------/**Fatima TAMEX Input**/------------------------------------------///
    if (PrcID_Conv[4] ==4 ){
-       Do_Fatima_Tamex_Histos(pInput,pOutput);  
+       Process_Fatima_Tamex_Histos(pInput,pOutput);  
         pOutput->pFAT_Tamex_WR = pInput->fFat_Tamex_WR;
         
         Fat_TAM_SC41L_ANA = pInput->fFat_Lead_Fast[FATIMA_TAMEX_SC41L][0];
@@ -503,7 +503,7 @@ if(Fatmult > 0){
 
 
 
-        Do_Fatima_Histos(pInput, pOutput);
+        Process_Fatima_Histos(pInput, pOutput);
   }//End of proc ID
 
 
@@ -562,7 +562,7 @@ if(Fatmult > 0){
               pOutput->pGe_CF_T_Aligned[GeDet[i]][GeCrys[i]] = Ge_cfd_Talign[i];
         }
  
-            Do_Germanium_Histos(pOutput);
+            Process_Germanium_Histos(pOutput);
       }
 
  ///--------------------------------------/**Finger Input**/------------------------------------------///
@@ -591,7 +591,7 @@ if(Fatmult > 0){
             }
         }
 
-      Do_Finger_Histos(pInput,pOutput);
+      Process_Finger_Histos(pInput,pOutput);
     }
   /**----------------------------------------------------------------------------------------------**/ 
   pOutput->SetValid(isValid);
@@ -639,7 +639,7 @@ if(Fatmult > 0){
 
 
 }
- void EventAnlProc::Do_WR_Histos(EventUnpackStore* pInput){
+ void EventAnlProc::Process_WR_Histos(EventUnpackStore* pInput){
      /// FATIMA DEAD TIME
        if (pInput->fFat_WR > 0) {
        
@@ -926,7 +926,7 @@ void EventAnlProc::Make_FRS_Histos(){
       
 }
 
-void EventAnlProc::Do_FRS_Histos(EventAnlStore* pOutput){
+void EventAnlProc::Process_FRS_Histos(EventAnlStore* pOutput){
     FRS_time_mins = 0;
     
     if(pOutput->pFRS_WR>0) FRS_time_mins =(pOutput->pFRS_WR/60E9)-26900000;
@@ -1688,7 +1688,7 @@ AidaHit EventAnlProc::ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const
         
     }   
     /////////////////////////////////////////////////// 
-    void EventAnlProc::Do_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
+    void EventAnlProc::Process_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
     
          fired_det1=false, fired_det2=false;    
          ZERO_ARRAY(bPlas_tot_hits);
@@ -1890,7 +1890,7 @@ AidaHit EventAnlProc::ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const
  
  
 //-----------------------------------------------------------------------------------------------//
-void EventAnlProc::Do_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
+void EventAnlProc::Process_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
           
         //bool fired_det1=false, fired_det2=false;    
          
@@ -2143,7 +2143,7 @@ void EventAnlProc::Make_Fatima_Histos(){
     
 }
 ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
-void EventAnlProc::Do_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
+void EventAnlProc::Process_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
     
     Fat_time_mins =0; 
     if(Fat_WR>0) Fat_time_mins =(Fat_WR/60E9)-26800000;
@@ -2365,7 +2365,7 @@ if(Fatmult > 0){
       //}
         }
     ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
-    void EventAnlProc::Do_Germanium_Histos(EventAnlStore* pOutput)
+    void EventAnlProc::Process_Germanium_Histos(EventAnlStore* pOutput)
     {
         Ge_time_mins=0;
       if(Ge_WR>0) Ge_time_mins =(Ge_WR/60E9)-26900000;
@@ -2565,7 +2565,7 @@ if(Fatmult > 0){
                 }
             }
         }
-    }//end of Do_Germanium_Histos()
+    }//end of Process_Germanium_Histos()
     
     
     /**----------------------------------------------------------------------------------**/
@@ -2628,7 +2628,7 @@ hFING_Multiplicity =  MakeTH1('I',"FINGER/Multiplicity","Finger Multiplicity", 5
 }
 ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
 
-    void EventAnlProc::Do_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
+    void EventAnlProc::Process_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
   // Verify Finger Data Sanity
   // Need to investigate if lead/trail mismatches are fine or not
   int maxtot = 0;
