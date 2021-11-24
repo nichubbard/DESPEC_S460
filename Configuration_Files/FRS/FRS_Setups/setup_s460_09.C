@@ -6,73 +6,73 @@ void setup_s460_09()
 
   DESPECAnalysis* an = dynamic_cast<DESPECAnalysis*> (TGo4Analysis::Instance());
   if (an==0) {
-    cout << "!!!  Script should be run in FRS analysis" << endl;
+    //cout << "!!!  Script should be run in FRS analysis" << endl;
     return;
   }
 
   TFRSParameter* frs = dynamic_cast<TFRSParameter*> (an->GetParameter("FRSPar"));
   if (frs==0) {
-    cout << "!!!  Parameter FRSPar not found" << endl;
+    //cout << "!!!  Parameter FRSPar not found" << endl;
     return;
   }
 
   TMWParameter* mw = dynamic_cast<TMWParameter*> (an->GetParameter("MWPar"));
   if (mw==0) {
-    cout << "!!!  Parameter MWPar not found" << endl;
+    //cout << "!!!  Parameter MWPar not found" << endl;
     return;
   }
 
   TMUSICParameter* music = dynamic_cast<TMUSICParameter*> (an->GetParameter("MUSICPar"));
   if (music==0) {
-    cout << "!!!  Parameter MUSICPar not found" << endl;
+    //cout << "!!!  Parameter MUSICPar not found" << endl;
     return;
   }
 
   TSCIParameter* sci = dynamic_cast<TSCIParameter*> (an->GetParameter("SCIPar"));
   if (sci==0) {
-    cout << "!!!  Parameter SCIPar not found" << endl;
+    //cout << "!!!  Parameter SCIPar not found" << endl;
     return;
   }
 
   TIDParameter* id = dynamic_cast<TIDParameter*> (an->GetParameter("IDPar"));
   if (id==0) {
-    cout << "!!!  Parameter IDPar not found" << endl;
+    //cout << "!!!  Parameter IDPar not found" << endl;
     return;
   }
 
   TTPCParameter* tpc = dynamic_cast<TTPCParameter*> (an->GetParameter("TPCPar"));
   if (tpc==0) {
-    cout << "!!!  Parameter TPCPar not found" << endl;
+    //cout << "!!!  Parameter TPCPar not found" << endl;
     return;
   }
 
 //   TLABRParameter* labr = dynamic_cast<TLABRParameter*> (an->GetParameter("LABRPar"));
 //   if (labr==0) {
-//     cout << "!!!  Parameter LABRPar not found" << endl;
+//     //cout << "!!!  Parameter LABRPar not found" << endl;
 //     return;
 //   }
 
   TSIParameter* si = dynamic_cast<TSIParameter*> (an->GetParameter("SIPar"));
   if (si==0) {
-    cout << "!!!  Parameter SIPar not found" << endl;
+    //cout << "!!!  Parameter SIPar not found" << endl;
     return;
   }
 
   TMRTOFMSParameter* mrtof = dynamic_cast<TMRTOFMSParameter*> (an->GetParameter("MRTOFMSPar"));
   if (mrtof==0) {
-    cout << "!!!  Parameter MR-TOF-MSPar not found" << endl;
+    //cout << "!!!  Parameter MR-TOF-MSPar not found" << endl;
     return;
   }
   
   TRangeParameter* range = dynamic_cast<TRangeParameter*> (an->GetParameter("RangePar"));
   if (range==0) {
-    cout << "!!!  Parameter RangePar not found" << endl;
+    //cout << "!!!  Parameter RangePar not found" << endl;
     return;
   } 
  /*
   TModParameter* ElecMod = dynamic_cast<TModParameter*>(an->GetParameter("ModPar"));
    */
-  cout << endl << "setup script started" << endl;
+  //cout << endl << "setup script started" << endl;
 
 
 
@@ -118,7 +118,7 @@ void setup_s460_09()
   //frs->dist_focS4   = 3700.0; //S530 2021/Mar/21
   frs->dist_S4target= 3500.0; //S460 estimated position for implantation 2021/Apr/15
   frs->dist_focS4   = 3300.0; //S460 2021/Apr/15 for run81-ta1-2021.txt
- 
+
   //S8
   frs->dist_focS8 = 0;
   frs->dist_MW81 = 0;
@@ -169,11 +169,11 @@ void setup_s460_09()
 
   // From here VFTXMulti-HitTDC analysis
   id->vftx_s2pos_option=2; //(1: sc21x-timediff(not implemented), 2:tpc) 
-  id->vftx_length_2141 = 37.6179576; // SCI 21-41 s452 Pb 210311 from Multihittdc
-  id->vftx_length_2241 = 37.6179576; // SCI 21-41 s452 Pb 210311 from Multihittdc
-  id->vftx_vel_a_music41[0]=20888.0;
-  id->vftx_vel_a_music41[1]=-40943.0;
-  id->vftx_vel_a_music41[2]=22456.0;
+  id->vftx_length_2141 = 37.16826894; // SCI 21-41 s460 U 210419
+  id->vftx_length_2241 = 36.304866; // SCI 22-41 s460 U 210419
+  id->vftx_vel_a_music41[0]=12720.; //s460 U 210416 
+  id->vftx_vel_a_music41[1]=-18597.;
+  id->vftx_vel_a_music41[2]=8089.2;
   id->vftx_vel_a_music41[3]=0.0;
   
   // From here Multi-HitTDC analysis
@@ -202,16 +202,16 @@ void setup_s460_09()
   id->a2AoQCorr = 0.0012; //2020April12 JP
   id->a4AoQCorr = 0.0;
 
-  //  MUSIC41 velocity 16.04.21 U s460
-  id->vel_a[0] =   12720.; //  MUSIC41 velocity corr. s533
-  id->vel_a[1] =  -18597.;   // 
-  id->vel_a[2] =   8089.2; // 
+  //  MUSIC41 velocity 16.04.21 U s460 DAVIDE
+  id->vel_a[0] =   13776.; //  MUSIC41 velocity corr. s533
+  id->vel_a[1] =  -21163.;   // 
+  id->vel_a[2] =   9644.1; // 
   id->vel_a[3] =   0.0;
 
-// MUSIC42 velocity 16.04.21 U s460
-  id->vel_a2[0] =  14723. ; 
-  id->vel_a2[1] = -23059.;
-  id->vel_a2[2] =  10554.;
+// MUSIC42 velocity 16.04.21 U s460 DAVIDE
+  id->vel_a2[0] =  15532. ; 
+  id->vel_a2[1] = -25059.;
+  id->vel_a2[2] =  11786.;
   id->vel_a2[3] =  0.0;
   
   id->vel_a3[0] =  13951.37; //MUSIC43 velocity corr. (old)
@@ -220,22 +220,29 @@ void setup_s460_09()
   id->vel_a3[3] =  0.0;
   
   //TOF_SC42_SC21_TAC 06.03.21 Pb s452
-  //id->id_tofoff3  = 187701.;   // offset (ps)
-  id->id_tofoff3  = 181690.;   // offset (ps)
-  //id->id_path3    = 134732.;   // path/c [ps]
-  id->id_path3    = 127749.;   // path/c [ps
+  id->id_tofoff3  = 187701.;   // offset (ps)
+  //id->id_tofoff3  = 181690.;   // offset (ps)
+  id->id_path3    = 134732.;   // path/c [ps]
+  //id->id_path3    = 127749.;   // path/c [ps
   
 
   //TOF_SC41_SC21_TAC 16.04.21 U s460
-  id->id_tofoff2 =  176384.;  // offset (ps)
-  id->id_path2   =  123877.;  // path/c (ps)
+  //id->id_tofoff2 =  176384.;  // offset (ps)
+  //id->id_path2   =  123877.;  // path/c (ps)
+  
+
+//DAVIDE
+   id->id_tofoff2 =  181760.;  // offset (ps)
+   id->id_path2   =  127803.;  // path/c (ps)
 
   //TOF_SC41_SC22_TAC 16.04.21 U s460
   //id->id_tofoff5 =  168010.;  // offset (ps) 
   //id->id_path5   =  119612.;  // path/c (ps)
-  id->id_tofoff5 =  177643.;  // offset (ps) 
-  id->id_path5   =  122713.;  // path/c (ps)
-
+  //id->id_tofoff5 =  177643.;  // offset (ps) 
+  //id->id_path5   =  122713.;  // path/c (ps)
+  
+   id->id_tofoff5 =  177644.;  // offset (ps) 
+   id->id_path5   =  122709.;  // path/c (ps)
   
   id->mhtdc_length_s2s4 = 37.6179576; // SCI 21-41 s452 Pb 210311
   id->mhtdc_vel_a_music41[0]=20888.0;
@@ -748,20 +755,24 @@ void setup_s460_09()
   // Plastics
   //===========
 
-  //index 2 for Sc21
-  sci->x_a[0][2] =    477.29;  // quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][2] =   -0.2619;  // quickly done for s452 on 08.03.2021 (from online)
+ //index 2 for Sc21
+  //sci->x_a[0][2] =    477.29;  // quickly done for s452 on 08.03.2021 (from online)
+  //sci->x_a[1][2] =   -0.2619;  // quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][2] =    244.14;  // MARTA: s460
+  sci->x_a[1][2] =   -0.1279;  // MARTA: s460
   sci->x_a[2][2] =  0.000000;  //
   sci->x_a[3][2] =  0.000000;  //
   sci->x_a[4][2] =  0.000000;  //
   sci->x_a[5][2] =  0.000000;  //
   sci->x_a[6][2] =  0.000000;  //
-  
+ 
   //index 3 for Sc22
  // sci->x_a[0][3] =  1370;  //quickly done with run 0139
  // sci->x_a[1][3] =  -0.7;  //
-  sci->x_a[0][3] =  627.52;  // quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][3] = -0.3751;  //quickly done for s452 on 08.03.2021 (from online)
+  //sci->x_a[0][3] =  627.52;  // quickly done for s452 on 08.03.2021 (from online)
+  //sci->x_a[1][3] = -0.3751;  //quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][3] =  413.579;  // MARTA: s460
+  sci->x_a[1][3] = -0.309586;  //MARTA: s460
   sci->x_a[2][3] =  0.0000;  //
   sci->x_a[3][3] =  0.000000;  //
   sci->x_a[4][3] =  0.000000;  //
@@ -769,8 +780,10 @@ void setup_s460_09()
   sci->x_a[6][3] =  0.000000;  //
 
   // index 5 for Sc41
-  sci->x_a[0][5] = 641.56;  //  quickly done for s452 on 08.03.2021 (from online)
-  sci->x_a[1][5] = -0.2782;  // quickly done for s452 on 08.03.2021 (from online)
+  //sci->x_a[0][5] = 641.56;  //  quickly done for s452 on 08.03.2021 (from online)
+  //sci->x_a[1][5] = -0.2782;  // quickly done for s452 on 08.03.2021 (from online)
+  sci->x_a[0][5] = 743.488;  //  MARTA: s460
+  sci->x_a[1][5] = -0.312087;  // MARTA: s460
   sci->x_a[2][5] = 0.0000;   //
   sci->x_a[3][5] = 0.000000;   //
   sci->x_a[4][5] = 0.000000;   //
@@ -811,9 +824,11 @@ void setup_s460_09()
   // TOF calibration should be done via setting id->id_tofoff2(3)(4)
   sci->tac_off[0] = 0.0;  //SC21L-R    // fix to 0
   sci->tac_off[1] = 0.0;  //SC41L-R    // fix to 0
-  sci->tac_off[2] = 0.0;  //SC41L-SC21L   // fix to 0
-  sci->tac_off[3] = 0.0;  //SC41R-SC21R   // fix to 0
-  sci->tac_off[4] = 0.0;  //SC42L-R       // fix to 0
+  sci->tac_off[2] = 0.0;//SC41L-SC21L   // fix to 0
+  sci->tac_off[3] = 0.0;//SC41R-SC21R   // fix to 0
+  //sci->tac_off[2] = 181886;//SC41L-SC21L   // fix to 0
+  //sci->tac_off[3] = 181499;//SC41R-SC21R   // fix to 0
+  sci->tac_off[4] = 0.0;  //SC42L-R	  // fix to 0
   sci->tac_off[5] = 0.0;  //SC42L-SC21L   // fix to 0
   sci->tac_off[6] = 0.0;  //SC42R-SC21R   // fix to 0
   sci->tac_off[7] = 0.0;  //SC43L-R  // fix to 0
@@ -821,8 +836,10 @@ void setup_s460_09()
   sci->tac_off[9] = 0.0;  //SC81L-SC21L  // fix to 0
   sci->tac_off[10]= 0.0;  //SC81R-SC21R  // fix to 0
   sci->tac_off[11] = 0.0;  //SC22L-R  // fix to 0
-  sci->tac_off[12] = 0.0;  //SC41L-SC22L  // fix to 0
-  sci->tac_off[13] = 0.0;  //SC41R-SC22R  // fix to 0
+  sci->tac_off[12] = 0.0;//SC41L-SC22L  // fix to 0
+  sci->tac_off[13] = 0.0;//SC41R-SC22R  // fix to 0
+  //sci->tac_off[12] = 178866;//SC41L-SC22L  // fix to 0
+  //sci->tac_off[13] = 176444;//SC41R-SC22R  // fix to 0
   sci->tac_off[14]= 0.0;  //SC81L-SC22L  // fix to 0
   sci->tac_off[15]= 0.0;  //SC81R-SC22R  // fix to 0
 
@@ -855,13 +872,13 @@ void setup_s460_09()
   sci->tof_bll4  = 1.;    // not used online
   sci->tof_brr4  = 1.;    // not used online
 
-  sci->tof_a2 = 146.46; // [ps] offset   Tof S41-S21
+  sci->tof_a2 = 0.; // [ps] offset   Tof S41-S21
   sci->tof_a3 = 0.; // [ps] offset   Tof S42-S21
   sci->tof_a4 = 0.; // [ps] offset   Tof S81-S21
 
   // for VFTX
-  sci->vftx_offset_2141  =  -70; //ns // s452 Pb 210311
-  sci->vftx_offset_2241  =  -55; //ns // s452 Pb 210311
+  sci->vftx_offset_2141  =  -185.44; //ns // s460 U 210419
+  sci->vftx_offset_2241  =  -168.77; //ns // s460 U 210419
   
   // for multihitTDC
   sci->mhtdc_factor_ch_to_ns =  0.025;// tp be set in parameter...
@@ -872,12 +889,12 @@ void setup_s460_09()
   sci->mhtdc_offset_31l_31r  =  0.0;              sci->mhtdc_factor_31l_31r = 60.0; // pos = offset + factor*dt
   sci->mhtdc_offset_81l_81r  =  -410.411;         sci->mhtdc_factor_81l_81r = 43.691; // pos = offset + factor*dt
   sci->mhtdc_offset_22l_22r  =  -39.6625+20.0;    sci->mhtdc_factor_22l_22r = 62.5341;  // pos = offset + factor*dt
-  sci->mhtdc_offset_41_21  =  182.4; //ns // s530 U 210330
+  sci->mhtdc_offset_41_21  =  181.2; //ns // s460 MARTA
   sci->mhtdc_offset_42_21  =  163.79; //ns // s452 Pb 210311
   sci->mhtdc_offset_43_21  =  0.0; //ns
   sci->mhtdc_offset_31_21  =  0.0; //ns
   sci->mhtdc_offset_81_21  =  -400.0 + 165.214; //ns
-  sci->mhtdc_offset_41_22  =  266.9; //ns // s452 Pb 210311
+  sci->mhtdc_offset_41_22  =  271.95; //ns // s460 MARTA
 
   //---- initial value for Z vs AoQ PID -----//
   id->ID_Z_AoverQ_num[0]=5;
@@ -1099,6 +1116,6 @@ void setup_s460_09()
   range->ladder_2_in = false;
   range->ladder_2_slope = -0.01691;
 
-  cout << "Focus distance S4: " << frs->dist_focS4 << endl;
-  cout << "Setup done " << endl;
+  //cout << "Focus distance S4: " << frs->dist_focS4 << endl;
+  //cout << "Setup done " << endl;
 }

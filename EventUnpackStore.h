@@ -62,6 +62,7 @@ public:
     Float_t fFRS_beta, fFRS_gamma;
     Float_t fFRS_tof4121, fFRS_tof4221;
     Float_t fFRS_AoQ, fFRS_AoQ_corr;
+    Float_t fFRS_tof2, fFRS_tof5;
     Float_t fFRS_z, fFRS_z2;
     Float_t fFRS_dEdeg, fFRS_dEdegoQ;
     

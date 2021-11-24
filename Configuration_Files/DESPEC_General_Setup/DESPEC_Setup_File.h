@@ -18,10 +18,10 @@
 #define FRS_MIN_Z 40
 #define FRS_MAX_Z 95
 ///Use High charge state gate for Correlations
-#define USE_dEdeg_Z1_GATE 0
+#define USE_dEdeg_Z1_GATE 1
 
 ///Define number of FRS gates and Polygon Points
-#define MAX_FRS_GATE 8
+#define MAX_FRS_GATE 9
 #define MAX_FRS_PolyPoints 8
 
 #define FINGER_TAMEX_MODULES 2
@@ -104,6 +104,6 @@
 #define Germanium_TimeMachineCh1 0
 #define Germanium_TimeMachineCh2 1
 
-#define AIDA_MAX_HITS 13000
+#define AIDA_MAX_HITS 15000
 
 #endif /* DESPEC_SETUP_FILE */

@@ -211,6 +211,8 @@ public:
   Float_t       tof_bll6;        /* [ps/channel]             */
   Float_t       tof_brr6;        /* [ps/channel]             */
   Float_t       tof_a6;          /* shift [channels]         */
+  Double_t 	tof5_s1[500];
+  Double_t 	FRSWR_End1[500];
 
   //-----for VFTX multihit TDC analysis------
   float vftx_offset_2141;

@@ -188,8 +188,8 @@ CorrelParameter::CorrelParameter(const Text_t* name)
          
          GBDG_FRS_Gate=1;
          GAidaImpDecT_Low = 0;
-         GAidaImpDecT_High = 5;
-         GAidaImpDecT_HBin = 50;
+         GAidaImpDecT_High = 60;
+         GAidaImpDecT_HBin = 60;
          GAidaFB_dT = 3000;
          GAidaFB_dE = 200;
          GAIDA_DecEFront_Max = 1500;
@@ -197,11 +197,14 @@ CorrelParameter::CorrelParameter(const Text_t* name)
          GAIDA_DecEFront_Min = 0;
          GAIDA_DecEBack_Min = 0; 
          
-         GAida_Ge_WRdT_Low=0;
-         GAida_Ge_WRdT_High=20000;
+	 //MARTA according to peak
+         GAida_Ge_WRdT_Low=13000;
+         GAida_Ge_WRdT_High=18000;
          
-         GAida_Fat_WRdT_High=0;
-         GAida_Fat_WRdT_Low=20000;
+         GAida_Fat_WRdT_High=13000;
+         GAida_Fat_WRdT_Low=18000;
+	 
+	 
          GFat1_Fat2_Low =-20000;
          GFat1_Fat2_High=20000;
          GPID_Gate_Beta_Gamma_Fatima_LT=0;
@@ -212,8 +215,8 @@ CorrelParameter::CorrelParameter(const Text_t* name)
          GFRS_Fat_THigh = 1000;
          GFRS_Fattam_TLow = -1000;
          GFRS_Fattam_THigh = 1000;
-         GFRS_bPlast_TLow = -1000;
-         GFRS_bPlast_THigh = 1000;
+         GFRS_bPlast_TLow = 13000;
+         GFRS_bPlast_THigh = 18000;
          
          GPID_Gate_FRS_Fatima_LT=0;
          GFRSFat_LT1LowStart=0, GFRSFat_LT1HighStart=0, GFRSFat_LT2LowStart=0, GFRSFat_LT2HighStart=0, GFRSFat_LT3LowStart=0, GFRSFat_LT3HighStart=0;

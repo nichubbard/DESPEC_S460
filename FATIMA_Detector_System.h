@@ -128,13 +128,13 @@ private:
 	//??
    // bool check_additional(int);
 
-    FATIMA_Time_Calibration* FATIMA_T_CALIB;
-    FATIMA_Energy_Calibration* FATIMA_E_CALIB;
 
     //tmp root things
  //   TH1D** Det_Hist;
 
 public:
+   FATIMA_Time_Calibration* FATIMA_T_CALIB;
+   FATIMA_Energy_Calibration* FATIMA_E_CALIB;
 	FATIMA_Detector_System();
 	~FATIMA_Detector_System();
 	
@@ -158,6 +158,8 @@ public:
 		
 
     //bool do_gain_matching(){return gain_match_used;};
+    bool do_gain_matching(int ts_ns) {FATIMA_E_CALIB->UpdateGainMatching(ts_ns); return 1;};
+    unsigned long next_ts_for_update() {return FATIMA_E_CALIB->next_ts_for_update;};
 
    // void write();
     //void set_Gain_Match_Filename(std::string);

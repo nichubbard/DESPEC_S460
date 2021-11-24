@@ -51,7 +51,10 @@ using namespace std;
 FRS_Detector_System::FRS_Detector_System(){
     
     
+    
      DESPECAnalysis* an = dynamic_cast<DESPECAnalysis*> (TGo4Analysis::Instance());
+     
+     fCal = dynamic_cast<CalibParameter*> (an->GetParameter("CalibPar")); 
     
   if (an==0) {
     cout << "!!!  Script should be run in FRS analysis" << endl;
@@ -3283,6 +3286,9 @@ for(int i=0; i<8; i++){
 
 
 void FRS_Detector_System::FRS_Anal(){
+
+
+
     
     ///==================================================================================///
                     /// Start of MUSIC  analysis
@@ -3746,7 +3752,24 @@ void FRS_Detector_System::FRS_Anal(){
    if(sci_b_tofll5 && sci_b_tofrr5){
      sci_tof5        =   (sci->tof_bll5 * sci_tofll5 + sci->tof_a5 + sci->tof_brr5 * sci_tofrr5)/2.0 ;  // tof_a5  is essentially unnecessary (even confusing) = 0
      sci_tof5_calib   =  -1.0*sci_tof5 + id->id_tofoff5;
-    
+     //cout << WR_Ts << endl;
+      for(int i=0; i<100;i++){
+         
+	 if(i==0){
+	 if(WR_Ts >= 0 && WR_Ts < fCal->FRSWR_End[i]){
+           
+	   if(sci_tof5_calib>0)sci_tof5_calib = sci_tof5_calib - fCal->tof5_s[i];
+	 }
+	 }
+	 
+	 else if(i>0){
+         if(WR_Ts >= fCal->FRSWR_End[i-1] && WR_Ts < fCal->FRSWR_End[i]){
+            
+	    if(sci_tof5_calib>0)sci_tof5_calib = sci_tof5_calib- fCal->tof5_s[i];
+       }     
+       }  
+     
+     }
    }
     else {sci_tof5=0;sci_tof5_calib=0;}
 
@@ -4019,6 +4042,7 @@ void FRS_Detector_System::FRS_Anal(){
   if(1 == id->tof_s4_select){ //SC21-SC41
   if (sci_b_tofll2 && sci_b_tofrr2){
     //// id_beta = id->id_path2 /(id->id_tofoff2 - sci_tof2);
+    
     id_beta = id->id_path2 /  sci_tof2_calib ;// calculate non-inverted "real" tof already in sci analysis.
    // cout<<"id_beta " <<id_beta <<" id->id_path2 " <<id->id_path2 << " sci_tof2_calib " <<sci_tof2_calib << endl;
 //     if(bDrawHist){
@@ -4254,6 +4278,13 @@ void FRS_Detector_System::FRS_Anal(){
 //           mhtdc_tof4121=0;
 //    mhtdc_tof4122=0;
 //    mhtdc_tof4221=0;
+}
+
+ ///Test to shift WR to FRS branch
+void FRS_Detector_System::WR_Check(int ts_minutes){
+	WR_Ts = ts_minutes;
+	
+   // cout<<"ts_minutes " <<ts_minutes <<" tpc_s4target_y " <<tpc_s4target_y <<  endl;
 }
 
     

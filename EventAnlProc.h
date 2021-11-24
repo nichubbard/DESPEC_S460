@@ -173,6 +173,7 @@ class EventAnlProc : public TGo4EventProcessor {
       Float_t  FRS_ID_brho[2], FRS_ID_rho[2];
       Float_t  FRS_beta, FRS_beta3, FRS_gamma;
       Float_t  FRS_AoQ, FRS_AoQ_corr;
+      Float_t  FRS_tof2, FRS_tof5;
       Float_t  FRS_z, FRS_z2, FRS_z3;
       Float_t  FRS_dEdeg, FRS_dEdegoQ;
       Float_t  FRS_AoQ_mhtdc, FRS_AoQ_corr_mhtdc;
@@ -186,6 +187,7 @@ class EventAnlProc : public TGo4EventProcessor {
       Int_t ZAoQgnum,Z1Z2gnum,X2AoQgnum,X4AoQgnum,dEdeggnum;
       Float_t X_ZAoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints],Y_ZAoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints];
       Float_t X_ZZ2[MAX_FRS_GATE][MAX_FRS_PolyPoints],Y_ZZ2[MAX_FRS_GATE][MAX_FRS_PolyPoints];
+      Float_t X_ZSC[MAX_FRS_GATE][MAX_FRS_PolyPoints],Y_ZSC[MAX_FRS_GATE][MAX_FRS_PolyPoints];
       Float_t XX4_AoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints], YX4_AoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints];
       Float_t XX2_AoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints], YX2_AoQ[MAX_FRS_GATE][MAX_FRS_PolyPoints];
       Float_t X_dEdeg[MAX_FRS_GATE][MAX_FRS_PolyPoints], Y_dEdeg[MAX_FRS_GATE][MAX_FRS_PolyPoints];
@@ -214,6 +216,7 @@ class EventAnlProc : public TGo4EventProcessor {
       int    stdcmult;
       int    sqdcmult;
       Long64_t Fat_time_mins;
+      Long64_t Fat_time_mins_corr;
       int    Fat_QDC_ID[FAT_MAX_VME_CHANNELS];
       double Fat_QDC_E[FAT_MAX_VME_CHANNELS];
       double Fat_QDC_E_Raw[FAT_MAX_VME_CHANNELS];
@@ -244,6 +247,10 @@ class EventAnlProc : public TGo4EventProcessor {
       Long64_t Fat_QDC_Singles_t_coarse[FAT_VME_MAX_MULTI];
       double_t Fat_QDC_Singles_t_fine[FAT_VME_MAX_MULTI];
       
+      Int_t Fat_first_TS;
+      Int_t Fat_last_TS;
+      
+      bool fat_had_first;
       
        // From unpacker
           int    GeFired;
@@ -398,21 +405,57 @@ class EventAnlProc : public TGo4EventProcessor {
             TH1 *hbPlast_FatTAM;
 
             //FRS Histograms
+	    TH2 *hID_a2_AoQ;
+	    TH2 *hID_a4_AoQ;
+	    /*
+	    TH2 *hFRS_TPC_X_vs_T[7];
             TH2  *hID_Z1_vs_T;
+	    TH2  *hID_Z2_vs_T;
+	    TH2 *hID_AoQ_vs_T;
+	    TH2 *hID_tof2_vs_T;
+	    TH2 *hID_tof5_vs_T;
+	    TH2  *hID_X2_vs_T;
+	    TH2  *hID_X4_vs_T;
+	    
+	    //FRS histos Z gated
+	    TH2 *hFRS_TPC_X_vs_T_Rn[7];
+	    TH2 *hID_a2_AoQ_Rn;
+	    TH2 *hID_a4_AoQ_Rn;
+	    TH2 *hID_AoQ_vs_T_Rn;
+	    TH2 *hID_tof2_vs_T_Rn;
+	    TH2 *hID_tof5_vs_T_Rn;
+	    TH2  *hID_X2_vs_T_Rn;
+	    TH2  *hID_X4_vs_T_Rn;
+	    TH2 *hdEdeg_Z_Rn;    
+	    
+	    TH2 *hID_Z_vs_T_Shifted;
+	    TH2 *hID_Z2_vs_T_Shifted;
+	    */
              TH2  *hID_x2AoQ;
              TH2 *hID_x4AoQ;
              TH2 *hID_x4AoQ_zsame;
              TH2 *hID_Z_AoQ;
              TH2 *hID_Z_AoQ_zsame;
              TH2 *hID_Z_AoQ_corr;
+	     TH2 *hID_Z2_AoQ_corr;
              TH2 *hID_Z_Z2;
              TH2 *hdEdegoQ_Z;
              TH2 *hdEdeg_Z;
 	     
+	     TH2 *hID_Z_E_SC41;
 	     TH2 *hID_Z_E_SC42;
 	     TH2 *hID_Z_E_SC43;
-              
+	     
+             TH2 *hID_E_SC41_E_SC42;
+	      
+	      
              TH2 *hID_Z1_Z2gate[MAX_FRS_GATE];
+	     
+	     TH2 *hID_tof5_vs_T_Rn_dEdegZgate[MAX_FRS_GATE];
+	     TH2 *hID_a2_AoQ_Rn_dEdegZgate[MAX_FRS_GATE];
+	     TH2 *hID_a4_AoQ_Rn_dEdegZgate[MAX_FRS_GATE];
+	     
+	     TH2 *hID_Z1_Z2_Z1AoQgate[MAX_FRS_GATE];
              TH2 *hID_x2AoQ_x2AoQgate[MAX_FRS_GATE];
              TH2 *hID_x2AoQ_x4AoQgate[MAX_FRS_GATE];
              
@@ -424,10 +467,20 @@ class EventAnlProc : public TGo4EventProcessor {
              
              TH2 *hID_x2AoQ_Z1Z2gate[MAX_FRS_GATE];
              TH2 *hID_x2AoQ_Z1AoQgate[MAX_FRS_GATE];
+	     TH2 *hID_x2AoQ_Z1SCgate[MAX_FRS_GATE];
+	     
              TH2 *hID_x4AoQ_Z1Z2gate[MAX_FRS_GATE];
              TH2 *hID_x4AoQ_Z1AoQgate[MAX_FRS_GATE];
+	     TH2 *hID_x4AoQ_Z1SCgate[MAX_FRS_GATE];
+	     
              TH2 *hID_ZAoQ_Z1Z2gate[MAX_FRS_GATE];
-             TH2 *hID_SC43Z1_Z1Z2gate[MAX_FRS_GATE];
+	     TH2 *hID_ZAoQ_Z1SCgate[MAX_FRS_GATE];
+	     
+	     TH2 *hID_Z_E_SC41_Z1Z2gate[MAX_FRS_GATE];
+             TH2 *hID_Z_E_SC42_Z1Z2gate[MAX_FRS_GATE];
+	     TH2 *hID_Z_E_SC42_Z1SCgate[MAX_FRS_GATE];
+	     
+	     TH2 *hID_E_SC41_E_SC42_Z1Z2gate[MAX_FRS_GATE];
              TH2 *hID_ZAoQ_Z1Z2_X2AoQgate[MAX_FRS_GATE];
              TH2 *hID_ZAoQ_Z1Z2_X4AoQgate[MAX_FRS_GATE];
              TH2 *hID_Z1_AoQ_dEdegZgate[MAX_FRS_GATE];
@@ -437,6 +490,7 @@ class EventAnlProc : public TGo4EventProcessor {
              
              TGo4PolyCond  *cID_Z_AoQ[MAX_FRS_GATE];       
              TGo4PolyCond  *cID_Z_Z2gate[MAX_FRS_GATE];
+	     TGo4PolyCond  *cID_Z_SCgate[MAX_FRS_GATE];
              TGo4PolyCond  *cID_x2AoQ[MAX_FRS_GATE];
              TGo4PolyCond  *cID_x4AoQ[MAX_FRS_GATE];
              TGo4PolyCond  *cID_dEdeg_Z1[MAX_FRS_GATE];
@@ -445,6 +499,7 @@ class EventAnlProc : public TGo4EventProcessor {
              TH2 *hID_Z_AoQgate[MAX_FRS_GATE];  
              TH2 *hID_dEdeg_Z1_Z1AoQgate[MAX_FRS_GATE];
              TH2 *hID_dEdeg_Z1_Z1Z2gate[MAX_FRS_GATE];
+	     TH2 *hID_dEdeg_Z1_Z1SCgate[MAX_FRS_GATE];
                   
              TH2 *hID_dEdeg_Z1_Z1Z2_X2AoQgate[MAX_FRS_GATE];
              TH2 *hID_dEdeg_Z1_Z1Z2_X4AoQgate[MAX_FRS_GATE];
@@ -507,6 +562,8 @@ class EventAnlProc : public TGo4EventProcessor {
             TH1 *hScalar_hit_pattern;
             //Fatima Histograms
             TH1 *hFAT_Energy[FAT_MAX_VME_CHANNELS];
+	    TH1 *hFAT_GainMonitor[FAT_MAX_VME_CHANNELS];
+	    TH2 *hFat_E_GainMonitor[FAT_MAX_VME_CHANNELS];
             TH1 *hFAT_QDCdt[FAT_MAX_VME_CHANNELS];
             TH1 *hFAT_EnergySum;
             TH1 *hFAT_EnergySum_Large;
@@ -517,7 +574,10 @@ class EventAnlProc : public TGo4EventProcessor {
             
             TH1 *hFAT_Multipl;
             TH1 *hFAT_hits_TDC;
-            TH1 *hFat_Energy_GainMonitor;
+            TH2 *hFat_Energy_GainMonitor;
+	    TH2 *hFat_Energy_GainMonitor0;
+	    TH2 *hFat_dT_Monitor;
+	    TH2 *hFat_dT_Sc41_Monitor;
 
             TH1 *hFAT_SC41_check;
 
@@ -552,6 +612,10 @@ class EventAnlProc : public TGo4EventProcessor {
             TH1 *hGe_Chan_Time_Diff[Germanium_MAX_DETS][Germanium_CRYSTALS];
             TH1 *hGe_Chan_Time_Diff_CF[Germanium_MAX_DETS][Germanium_CRYSTALS];
             //TH1 *hGe_Time_Diff_vs_Energy[32];
+	    TH1 *hGe_GainMonitor[28];
+	    TH2 *hGe_GainMonitor_Ts[28];
+	    TH2 *hGe_dTMonitor_Ts[28];
+	    TH2 *hGe_dTvsCh;
             TH1 *hGe_ESum;
             TH1 *hGe_Mult;
             TH1 *hGe_ESum_halfkev;
@@ -560,6 +624,7 @@ class EventAnlProc : public TGo4EventProcessor {
             TH1 *hGe_Hit_Pat;
             TH2 *hGe_Chan_E_Mat;
             TH2 *hGe_Chan_E_vsCrys;
+	    TH2 *hGe_MultvsE[4];
             TH2 *hGe_Time_Diff_vs_Energy_sum;
             TH2 *hGe_Chan_E_vsDet;
 	    TH2 *hGe_E_vsChan;

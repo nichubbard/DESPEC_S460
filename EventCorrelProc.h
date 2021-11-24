@@ -102,12 +102,13 @@ class EventCorrelProc : public TGo4EventProcessor {
         AidaHit ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const&);
         std::multimap<int64_t, AidaHitPID> implantMap;
         
+      virtual void UserPostLoop();	
+	
     void get_used_systems();
     void Ge_2DPromptFlashCut();
     void Fat_2DPromptFlashCut();
   //  void Fat_TimeCorrection(EventAnlStore* cInput);
-    void Beta_Gates();
-    
+    void FRS_Gates_corrProc();
     int  IsData(std::ifstream &f);
             
     void Make_FRS_AIDA_Histos();
@@ -118,7 +119,6 @@ class EventCorrelProc : public TGo4EventProcessor {
     void Make_FRS_LongIso_Ge_Histos();
     void Make_FRS_LongIso_Fatima_Histos();
     
-    void Make_Beta_Gamma_bPlast_SpillOff_Histos();
     void Make_Beta_Gamma_Histos();
     void Make_Timemachine_Histos();
      
@@ -130,8 +130,6 @@ class EventCorrelProc : public TGo4EventProcessor {
     
     void Process_FRS_LongIso_Ge(EventAnlStore* cInput, EventCorrelStore* cOutput);
     void Process_FRS_LongIso_Fat(EventAnlStore* cInput, EventCorrelStore* cOutput);
-    
-    void Process_Beta_Gamma_bPlast_SpillOff(EventAnlStore* cInput, EventCorrelStore* cOutput);
     
     void Process_Beta_Gamma(EventAnlStore* cInput, EventCorrelStore* cOutput);
     void Process_Timemachine(EventAnlStore* cInput, EventCorrelStore* cOutput);
@@ -196,7 +194,9 @@ class EventCorrelProc : public TGo4EventProcessor {
         double FatT_Prm_Long[FAT_VME_MAX_MULTI];
         Long64_t ts_fat;
         long long lastAIDAWR;
-        long long lastAIDAdecayWR;
+        
+        
+        //Helena
 	
 	TH2 *hFRS_Z_AoQ_DSSD1_stopped;
         TH2 *hFRS_Z_AoQ_DSSD2_stopped;
@@ -212,49 +212,45 @@ class EventCorrelProc : public TGo4EventProcessor {
     TH2 *hAIDA_EvsZ_DSSD1;
     TH2 *hAIDA_EvsZ_DSSD2;
     TH2 *hAIDA_EvsZ_DSSD3;
+	
+	TH1 *hAIDA_Shock_DSSD1_10ms;
+	TH1 *hAIDA_Shock_DSSD2_10ms;
+	TH1 *hAIDA_Shock_DSSD3_10ms;
+	TH1 *hAIDA_Shock_DSSD1_100us;
+	TH1 *hAIDA_Shock_DSSD2_100us;
+	TH1 *hAIDA_Shock_DSSD3_100us;	
+	
+	TH1 *hAIDA_decays_e_good[3];
+	
+	TH2 *hAIDA_EvsdT_all;
+	TH2 *hAIDA_EvsdT_all_OFF;
+	TH2 *hAIDA_EvsdT_all_ON;
+	TH2 *hAIDA_EvsdT[MAX_FRS_GATE];
+	
+        TH1 *hbPlas_ToT_DecayGated[4][bPLASTIC_CHAN_PER_DET];
+        //TH1 *hbPlas_ToT_CutfileGated[4][bPLASTIC_CHAN_PER_DET];
+	TH1 *hGe_BetaGamma_bPlast; 
+	TH1 *hbPlast_Ge_beta_dT;
+	TH1 *hFat_BetaGamma_bPlast;
+    TH1 *hAida_FBdT;
+    TH1 *hAida_FBdE;
+	double betalo[32];
+	double betahi[32];
+    Long64_t t_lastSC41 = 0;
+    TH1 *hAIDA_DecEvLen;
+    TH1 *hAIDA_DecMult;
+    TH1 *hFAT_OffSpill;
+    TH1* hAida_Dec_bPlas_Correl_dT;
+    TH1* hAida_Dec_bPlas_ToTgate_dT;
     
-        
-    TH1 *hAIDA_Shock_DSSD1_10ms;
-    TH1 *hAIDA_Shock_DSSD2_10ms;
-    TH1 *hAIDA_Shock_DSSD3_10ms;
-    TH1 *hAIDA_Shock_DSSD1_100us;
-    TH1 *hAIDA_Shock_DSSD2_100us;
-    TH1 *hAIDA_Shock_DSSD3_100us;
-    
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1;
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2;
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3;
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1_bg;
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg;
-    TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg;
-      
-    TH1 *hAIDA_Shock_DSSD1_after10ms;
-    TH1 *hAIDA_Shock_DSSD2_after10ms;
-    TH1 *hAIDA_Shock_DSSD3_after10ms;
-    TH1 *hAIDA_Shock_DSSD1_after100us;
-    TH1 *hAIDA_Shock_DSSD2_after100us;
-    TH1 *hAIDA_Shock_DSSD3_after100us;
-    
-  
-      
-        Int_t bPlast_Det;
-        Int_t bPlast_Chan;
-        Int_t Beta_Gate_Low[bPLASTIC_TAMEX_MODULES+1][bPLASTIC_CHAN_PER_DET];
-        Int_t Beta_Gate_High[bPLASTIC_TAMEX_MODULES+1][bPLASTIC_CHAN_PER_DET];
+    TH2* hAida_ClusterSizeX_FrontE;
       
         TH1 *hAida_Implant_deadtime;
-        TH1 *hAida_Decay_deadtime;
         TH1 *hFatVME_TMdT;
         TH1 *hFatTAMEX_TMdT;
         TH1 *hGe_TMdT;
         TH1 *hbPlastic_TMdT;
         TH1 *hAida_TMdT;
-        
-        TH1 *hAIDA_WRTM_FRS;
-        TH1 *hAIDA_WRTM_Ge;
-        TH1 *hAIDA_WRTM_FatVME;
-        TH1 *hAIDA_WRTM_FatTAMEX;
-        TH1 *hAIDA_WRTM_bPlast;
         
         TH2 *hFatVME_FatTAMEX_TM;
         TH2 *hFatVME_Ge_TM;
@@ -290,6 +286,11 @@ class EventCorrelProc : public TGo4EventProcessor {
       TH1 *hA_FRS_Z1Z2_x4AoQ_implants_e_stopped[MAX_FRS_GATE][3];
       TH2 *hA_FRS_Z1Z2_x4AoQ_implants_position[MAX_FRS_GATE][3];
       TH2 *hA_FRS_Z1Z2_x4AoQ_implants_position_stopped[MAX_FRS_GATE][3];
+      
+      TH2 *hA_FRS_Z1SC_implants_strip_xy[MAX_FRS_GATE][3];
+      TH2 *hA_FRS_Z1SC_implants_position[MAX_FRS_GATE][3];
+      TH2 *hA_FRS_Z1SC_implants_strip_xy_stopped[MAX_FRS_GATE][3];
+      TH2 *hA_FRS_Z1SC_implants_position_stopped[MAX_FRS_GATE][3];
        
       std::vector<TH2*> hA_FRS_ZAoQ_implants_pos_xy;
      // std::vector<TH1*> hA_FRS_ZAoQ_implants_e;
@@ -306,6 +307,24 @@ class EventCorrelProc : public TGo4EventProcessor {
      
       TH1 *hAida_Imp_bPlas_dT;
       TH1 *hFRS_bPlast_dT;
+      TH1 *hAIDA_Implant_Decay_ALL_dT;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_short;
+      TH1 *hAIDA_SC41_Decay_ALL_dT_short;
+
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1_bg;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg;
+      TH1 *hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg;
+
+      TH1 *hAIDA_Shock_DSSD1_after10ms;
+      TH1 *hAIDA_Shock_DSSD2_after10ms;
+      TH1 *hAIDA_Shock_DSSD3_after10ms;
+      TH1 *hAIDA_Shock_DSSD1_after100us;
+      TH1 *hAIDA_Shock_DSSD2_after100us;
+      TH1 *hAIDA_Shock_DSSD3_after100us;
+      
       
       TH1 *hA_impdec_dT;
       TH1 *hA_impdec_dT_FRS_gated;
@@ -351,6 +370,9 @@ class EventCorrelProc : public TGo4EventProcessor {
       
       TH1 *hA_FRSWR_GeWR;
       TH1 *hA_FRS_GeE;
+      
+      TH1 *hGe_E_OFF;
+      TH1 *hGe_E_ON;
       TH2 *hA_FRS_ZAoQ_GeEvsT_all;
       TH1 *hA_FRS_ZAoQ_GeE[MAX_FRS_GATE];
       TH1 *hA_FRS_Z1Z2_X2AoQ_GeE[MAX_FRS_GATE];
@@ -371,26 +393,13 @@ class EventCorrelProc : public TGo4EventProcessor {
       TH2 *hA_FRS_FatEvsT_LongIsoGated;
       TH2 *hA_FRS_FatE1vsFatE2_LongIsoGated;
       
-      //Spill of Beta-Gamma
-      TH1 *hbPlast_SpillOff_Fatima;
-      TH2 *hbPlast_SpillOff_Fatima_gammagamma;
-      TH2 *hbPlast_SpillOff_Germanium_gammagamma;
-      TH2 *hbPlast_SpillOff_Fatima_GamGam;
-      TH1 *hbPlast_SpillOff_Germanium;
-      TH2 *hbPlast_SpillOff_Germanium_GamGam;
-      TH1 *hbPlas_ToT_SpillOff[bPLASTIC_TAMEX_MODULES+1][bPLASTIC_CHAN_PER_DET];
-      TH1 *hbPlas_ToT_SpillOn[bPLASTIC_TAMEX_MODULES+1][bPLASTIC_CHAN_PER_DET];
-
-     ///AIDA BDG's
-      TH1 *hGe_BetaGamma;     
+      TH1 *hGe_BetaGamma;   
+      TH1 *hFat_BetaGamma;
+     
       TH1 *hAidaImpDecdT;
-      TH1 *hAida_FBdT;
-      TH1 *hAida_FBdE;
       TH1 *hAida_Dec_Ge_dT;
       TH1 *hAida_Dec_bPlas_dT;
       TH1 *hAida_Dec_Fatima_dT;
-      TH1 *hDecPIDGated[MAX_FRS_GATE];
-      TH1 *hDecPIDGated_dTgate[MAX_FRS_GATE];
       TH1 *hGe_BetaGamma_E[MAX_FRS_GATE];
       TH1 *hGe_BetaGamma_GeE1_GeE2[MAX_FRS_GATE];
       TH1 *hGe_BetaGamma_dT[MAX_FRS_GATE];
@@ -407,12 +416,53 @@ class EventCorrelProc : public TGo4EventProcessor {
       TH1 *hFat_LT2_stop_start;
       TH1 *hFat_LT2_stop_start_ns;
       
+      
       TH1 *hFat_95Rh_All_LT;
       TH1 *hFat_BetaGamma_E[MAX_FRS_GATE];
       TH2 *hFat_BetaGamma_E1_E2[MAX_FRS_GATE];
+      
+      
+      TH1 *hA_bPlastWR_GeWR;
+      TH1 *hA_bPlastDet1_GeE;
+      TH1 *hA_bPlastDet2_GeE;
+      
+      TH1 *hA_bPlastWR_FatWR;
+      TH1 *hA_bPlastDet1_FatE;
+      TH1 *hA_bPlastDet2_FatE;
 
+      TH1 *hA_implant_bPlast_GeE;
+      TH1 *hA_implant_bPlast_dT;
+      
+      std::vector<TH2*> hA_bPlast_decays_strip_xy;
+      std::vector<TH1*> hA_bPlast_decays_e;
+      TH1 *hA_bPlast_Energy_AidaImpGated[2][16];
+      TH1 *hA_bPlast_Energy_AidaDecayGated[2][16];
+      TH1 *hA_bPlast_E;
+      TH1 *hADecay_bPlast_E;
+      TH1 *hA_FRSgated_bPlast_E;
+      TH1 *hA_gatedE_bPlast_E;
+      
+      TH1 *hA_Ge_WRdT;
+      TH1 *hA_dT_GeE;
+      TH2 *hA_dT_imp_decay_vs_GeE;
+      TH1 *hA_dT_FRS_Gated_GeE;
+      TH2 *hA_dT_FRS_Gated_imp_decay_vs_GeE;
+      
+      TH1 *hA_Fat_WRdT;
+      TH1 *hA_dT_FatE;
+      TH2 *hA_dT_imp_decay_vs_FatE;
+      TH1 *hA_dT_FRS_Gated_FatE;
+      TH2 *hA_dT_FRS_Gated_imp_decay_vs_FatE;
+     
+      TH1 *hbPlast_FRS[3][16];
+      TH1 *dT_bPlast_FRS;
+      TH1 *hA_bPlast_E_Ch[3][16];
+      TH1 *hA_gatedE_bPlast_E_Ch[3][16];
+      
     //  bool AIDA_implantation_gate;
-
+      TGo4PolyCond  *cAIDA_IMPgate_DSSD1;
+      TGo4PolyCond  *cAIDA_IMPgate_DSSD2;
+      TGo4PolyCond  *cAIDA_IMPgate_DSSD3;
       TGo4PolyCond  *cGe_EdT_cut[MAX_FRS_GATE];
       TGo4PolyCond  *cFat_EdT_cut[MAX_FRS_GATE];
 
@@ -422,7 +472,7 @@ class EventCorrelProc : public TGo4EventProcessor {
       Long64_t FRS_WR;
       Long64_t bPLAS_WR;
       Long64_t FAT_WR;
-      Long64_t Ge_WR;
+      Long64_t GAL_WR;
       Long64_t dT_AIDA_FRS;
       Long64_t dT_AIDA_bPlast;
       Long64_t dT_FRS_bPlast;
@@ -448,9 +498,11 @@ class EventCorrelProc : public TGo4EventProcessor {
 
        Long64_t aida_imptime[3][128][128];
        Long64_t aida_imptime_FRS_gated[3][128][128];
+       Long64_t first_timestamp = 0;
+       Long64_t last_timestamp = 0;
        
        Double_t FatimaVME_TimeMachine_dT[10];
-       Double_t FatimaTAMEX_TimeMachine_dT[10];
+       Double_t FatimaTAMEX_TimeMachine_dT[500];
        Long64_t Germanium_TimeMachine_dT;
        Double_t bPlast_TimeMachine_dT[10];
        Double_t AIDA_TimeMachine_dT;

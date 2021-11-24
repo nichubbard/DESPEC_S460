@@ -108,7 +108,7 @@
 
 ## FRS Long Isomer PID Gate Number ##
 #5 is 190W, 7 192W
-1
+7
 
 ## dT FRS-Germanium/Fatima Time Gate (in ns) Long Isomers (Low, High, Histogram Bins, Histogram Min, Histogram Max, Time Scale Parameter)
 0 2000000 2000 0 2000 1000
@@ -120,7 +120,7 @@
 ######### Fatima prompt lifetime analysis gates #############
 
 ## PID Gate Number
-1
+6
 
 ## Lifetime Energy Gates (Start E low, E high: Stop E low, E High)[keV] ####
 ## Start/stop Lifetime 1 (Low-High):
@@ -140,19 +140,20 @@
 1
 ###
 #### dT Implant-Decay Time Window: Low, High, dT Histogram Binning (in seconds) ####
-0.5 10 450
+0.5 5 450
 
 #### Aida Front-Back Matching conditions (dT, dE) ####
 2000 2000
 
 #### Aida Min-Max Decay Energy Gate (Front, Back) [This is also for alpha-decay E gating] ####
-4000 10000 4000 10000 
+4700 5200 4700 5200 
 
 #### bPlastic ToT Gate ####
 4000 60000
 
 ## Fatima Beta-delayed gammas lifetime analysis gates ########
-#### PID Gate Numbe
+#### PID Gate Number
+5
 
 #### Lifetime Energy Gates (BDG Fatima) (Start E low, E high: Stop E low, E High) ####
 #### Start/stop Lifetime 1:

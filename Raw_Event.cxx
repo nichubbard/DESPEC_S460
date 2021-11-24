@@ -586,6 +586,7 @@ void Raw_Event::set_DATA_FATIMA(int QDC_FIRED,int TDC_FIRED,
     int dets_fired = 0;
     int tdc_dets_fired =0;
     for (int i=0; i<QDC_FIRED; i++) {
+	if(det_ids_QDC[i]<100){
         this->FAT_QDC_id[i] = det_ids_QDC[i];
         //if (det_ids_QDC[i] == 35) cout<<"I am in QDC"<<endl;
         this->FAT_QLong[i]  = Ql[i];
@@ -593,7 +594,7 @@ void Raw_Event::set_DATA_FATIMA(int QDC_FIRED,int TDC_FIRED,
         this->FAT_QShort_Raw[i] = Qs_Raw[i];
         this->FAT_QDC_t_coarse[i] = QDC_c[i];
         this->FAT_QDC_t_fine[i] = QDC_f[i];
-      
+      }
         for (int j=0; j<TDC_FIRED; j++) {
             if (det_ids_QDC[i] == det_ids_TDC[j]) {
                 this->FAT_id[dets_fired] = det_ids_QDC[i];

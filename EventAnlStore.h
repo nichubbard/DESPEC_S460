@@ -75,11 +75,11 @@ class EventAnlStore : public TGo4EventElement {
       Double_t pTRaw_vftx_42l;
       Double_t pTRaw_vftx_42r;
       
-      Bool_t pFRS_ZAoQ_pass[8];
-      Bool_t pFRS_x2AoQ_pass[8];
-      Bool_t pFRS_x4AoQ_pass[8];
-      Bool_t pFRS_Z_Z2_pass[8];
-      Bool_t pFRS_dEdeg_Z1_pass[8];
+      Bool_t pFRS_ZAoQ_pass[MAX_FRS_GATE];
+      Bool_t pFRS_x2AoQ_pass[MAX_FRS_GATE];
+      Bool_t pFRS_x4AoQ_pass[MAX_FRS_GATE];
+      Bool_t pFRS_Z_Z2_pass[MAX_FRS_GATE];
+      Bool_t pFRS_dEdeg_Z1_pass[MAX_FRS_GATE];
       
       
       

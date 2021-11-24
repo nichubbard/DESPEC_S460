@@ -61,8 +61,16 @@ CalibParameter::CalibParameter()
 	
 	for (i = 0; i<500;i++){
        
+       FRSWR_Z1_End[i] =0;
+       Z1_m[i] =0;
+       Z1_q[i] =0;
+       
+       FRSWR_Z2_End[i] =0;
+       Z2_m[i] =0;
+       Z2_q[i] =0;
+       
        FRSWR_End[i] =0;
-       Z1_Shift[i] =0;
+       tof5_s[i]=0;
        
     }
 	
@@ -227,7 +235,76 @@ CalibParameter::CalibParameter(const Text_t *name)
     }
   }
   file.close();
+  
+   //------------------------------------------------------------------------------//
+   file.open("Configuration_Files/FRS/Z_Calibration.txt");
+  if (file.fail()) {
+    cout << "ERROR:  Could not open file: Z_Calibration.txt\n";
+
+  }
+  
+  else {
+    cout << " CalibParameter - reading calibration from: Z_Calibration.txt\n";
+         int i=0;
+	 //for(i = 0; i < 104; i++){
+	 while(!file.eof()){
+         if(IsData(file)) file >> FRSWR_Z1_End[i] >>  Z1_m[i] >>  Z1_q[i];
+	 //cout << FRSWR_End[i] << " " << Z1_m[i] << " " << Z1_q[i] << endl;
+       	 i++;
+	 if (file.fail()) cout << "ERROR reading Z_Calibration.txt\n";
+        }
+       
+      }
+
+      file.close();
+
+   //------------------------------------------------------------------------------//
+   file.open("Configuration_Files/FRS/Z2_Calibration.txt");
+  if (file.fail()) {
+    cout << "ERROR:  Could not open file: Z2_Calibration.txt\n";
+
+  }
+  
+  else {
+    cout << " CalibParameter - reading calibration from: Z2_Calibration.txt\n";
+         int i=0;
+	 //for(i = 0; i < 104; i++){
+	 while(!file.eof()){
+         if(IsData(file)) file >> FRSWR_Z2_End[i] >>  Z2_m[i] >>  Z2_q[i];
+	 //cout << FRSWR_End[i] << " " << Z2_m[i] << " " << Z2_q[i] << " i " << i << endl;
+       	 i++;
+	 if (file.fail()) cout << "ERROR reading Z2_Calibration.txt\n";
+        }
+       
+      }
+
+      file.close();
+      
+      //------------------------------------------------------------------------------//
+      
+   file.open("Configuration_Files/FRS/tof5_Calibration.txt");
+  if (file.fail()) {
+    cout << "ERROR:  Could not open file: tof5_Calibration.txt\n";
+
+  }
+  
+  else {
+    cout << " CalibParameter - reading calibration from: tof5_Calibration.txt\n";
+         int i=0;
+	 //for(i = 0; i < 104; i++){
+	 while(!file.eof()){
+         if(IsData(file)) file >> FRSWR_End[i] >>  tof5_s[i];
+	// cout << FRSWR_End[i] << " " << tof5_s[i] << endl;
+       	 i++;
+	 if (file.fail()) cout << "ERROR reading tof5_Calibration.txt\n";
+        }
+       
+      }
+
+      file.close();
+
 }
+
 //------------------------------------------------------------------------------//
 
 CalibParameter::~CalibParameter()

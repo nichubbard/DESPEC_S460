@@ -61,19 +61,16 @@ EventCorrelProc::EventCorrelProc(const char* name) :
        if(fCorrel) fCorrel->PrintParameter(0,0);
      fCal = (CalibParameter*) GetParameter("CalibPar"); 
      
+    
   tag_all.clear();
   ts_all.clear();
   GeE_all.clear();
 
-  tag_fat_all.clear();
-  ts_fat_all.clear();
-  
   get_used_systems();
   Ge_2DPromptFlashCut();
   Fat_2DPromptFlashCut();
-  Beta_Gates();
  // Fat_TimeCorrection();
-  //FRS_Gates_corrProc();
+  FRS_Gates_corrProc();
   
 
  }
@@ -81,6 +78,15 @@ EventCorrelProc::EventCorrelProc(const char* name) :
 EventCorrelProc::~EventCorrelProc()
 {
   cout << "**** EventCorrelProc: Delete" << endl;
+}
+
+void EventCorrelProc::UserPostLoop()
+{
+
+  cout << "first timestamp: " << first_timestamp << endl;
+  cout << "last timestamp: " << last_timestamp << endl;
+  cout << "Length of run: " << double(last_timestamp - first_timestamp)/1e9 << " s" << endl;
+
 }
 
 //-----------------------------------------------------------
@@ -112,8 +118,6 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
     
     if(fCorrel->GSetup_corr_FRS_fat==true) Make_FRS_Prompt_Fat_Histos(); 
          
-    if(fCorrel->GSetup_corr_Beta_Gamma_bPlastSpillOff==true) Make_Beta_Gamma_bPlast_SpillOff_Histos();
-      
     if(fCorrel->GSetup_corr_Beta_Gamma==true) Make_Beta_Gamma_Histos();
         
     
@@ -121,17 +125,7 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
    
     }
    
-        ///White Rabbit inputs/outputs
-        AIDA_WR = cInput->pAIDA_WR;   
-        FRS_WR = cInput->pFRS_WR;
-        bPLAS_WR = cInput->pbPLAS_WR;
-        FAT_WR = cInput->pFAT_WR;
-        Ge_WR = cInput->pGe_WR;
-        cOutput->cAIDA_WR = cInput->pAIDA_WR;   
-        cOutput->cFRS_WR = cInput->pFRS_WR;
-        cOutput->cbPlast_WR = cInput->pbPLAS_WR;
-        cOutput->cFAT_WR = cInput->pFAT_WR;
-        cOutput->cGe_WR = cInput->pGe_WR;
+    
    
         Process_Timemachine(cInput, cOutput);
    
@@ -149,10 +143,6 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
           
           if(fCorrel->GSetup_corr_FRS_fat==true)Process_FRS_Prompt_Fat(cInput, cOutput); 
           
-        ///BDG with bPlastic/Spill Off 
-           if(fCorrel->GSetup_corr_Beta_Gamma_bPlastSpillOff==true) Process_Beta_Gamma_bPlast_SpillOff(cInput, cOutput);
-      
-             ///BDG with AIDA
           if(fCorrel->GSetup_corr_Beta_Gamma==true) Process_Beta_Gamma(cInput, cOutput); 
                                                      
           
@@ -161,6 +151,19 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
   event_number = cInput->pEvent_Number;
   cOutput->cEvent_number = event_number;
   
+  ///White Rabbit inputs
+    AIDA_WR = cInput->pAIDA_WR;   
+    FRS_WR = cInput->pFRS_WR;
+    bPLAS_WR = cInput->pbPLAS_WR;
+    FAT_WR = cInput->pFAT_WR;
+    GAL_WR = cInput->pGe_WR;
+   
+    cOutput->cAIDA_WR = cInput->pAIDA_WR;   
+    cOutput->cFRS_WR = cInput->pFRS_WR;
+    cOutput->cbPlast_WR = cInput->pbPLAS_WR;
+    cOutput->cFAT_WR = cInput->pFAT_WR;
+    cOutput->cGe_WR = cInput->pGe_WR;
+    
       ///FRS Outputs    
     cOutput->cFRS_AoQ = cInput->pFRS_AoQ;   
     cOutput->cFRS_ID_x2 = cInput-> pFRS_ID_x2;  
@@ -175,7 +178,6 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
     }
     
   ///Gates input TESTING!!!
-  // cInput->pFRS_ZAoQ_pass=true;
 //     cInput->pFRS_Z_Z2_pass=true;
 //     cInput->pFRS_x2AoQ_pass=true;
  
@@ -193,22 +195,9 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
      hGe_TMdT= MakeTH1('I',"TimeMachine/Systems_dT/Ge_FEBEX_TimeMachinedT","Germanium FEBEX TM Ch.1 -Ch.2 ",200,0,2000);
      
      hbPlastic_TMdT= MakeTH1('I',"TimeMachine/Systems_dT/bPlast_TAMEX_TimeMachinedT","bPlastic TAMEX TM Ch.1 -Ch.2 ",200,0,2000);
-    
      hAida_TMdT= MakeTH1('I',"TimeMachine/Systems_dT/AIDA_TimeMachinedT","AIDA TM Ch.1 -Ch.2 ",200,0,2000);
      
-     ///AIDA Time machine WR dT gates
-      hAIDA_WRTM_FRS = MakeTH1('I',"WR/AIDA/Timemachine_AIDA-FRS","White Rabbit AIDA WR TM - FRS",10000,-10000,10000,"WR dT(AIDA TM WR - FRS)[ns]", "Counts");
-      
-      hAIDA_WRTM_Ge = MakeTH1('I',"WR/AIDA/Timemachine_AIDA-Ge","White Rabbit AIDA WR TM - Ge",10000,-10000,10000,"WR dT(AIDA TM WR - Ge)[ns]", "Counts");
-      
-      hAIDA_WRTM_FatVME = MakeTH1('I',"WR/AIDA/Timemachine_AIDA-Fatima_VME","White Rabbit AIDA WR TM - Fatima_VME",10000,-10000,10000,"WR dT(AIDA TM WR - Fatima_VME)[ns]", "Counts");
-      
-      hAIDA_WRTM_FatTAMEX = MakeTH1('I',"WR/AIDA/Timemachine_AIDA-Fatima_TAMEX","White Rabbit AIDA WR TM - Fatima_TAMEX",10000,-10000,10000,"WR dT(AIDA TM WR - Fatima_TAMEX)[ns]", "Counts");
-      
-      hAIDA_WRTM_bPlast = MakeTH1('I',"WR/AIDA/Timemachine_AIDA-bPlast","White Rabbit AIDA WR TM - bPlast",10000,-10000,10000,"WR dT(AIDA TM WR - bPlast)[ns]", "Counts");
-      
-      
-     ///Coincidence matrices
+     
       hFatVME_FatTAMEX_TM = MakeTH2('D',"TimeMachine/Correlation_matrices/FatimaVME_FatTAMEX","Time Machine FATIMA VME vs Fatima TAMEX ", 200,0,2000, 200,0,2000,"Fatima VME TimeMachine", "Fatima TAMEX TimeMachine");
       
       hFatVME_Ge_TM = MakeTH2('D',"TimeMachine/Correlation_matrices/FatimaVME_Germanium","Time Machine FATIMA VME vs Germanium ", 200,0,2000, 200,0,2000,"Fatima VME TimeMachine", "Germanium FEBEX TimeMachine");
@@ -230,7 +219,7 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
       hAIDA_bPlast_TM = MakeTH2('D',"TimeMachine/Correlation_matrices/AIDA_bPlastic","Time Machine AIDA vs bPlastic TAMEX", 200,0,2000, 200,0,2000,"AIDA TimeMachine","bPlastic TAMEX TimeMachine");
 }
  void EventCorrelProc::Process_Timemachine(EventAnlStore* cInputMain, EventCorrelStore* cOutput){
- for(int i=0; i<10; i++){
+ for(int i=0; i<100; i++){
    FatimaTAMEX_TimeMachine_dT[i]=0;
  }
      ///Fatima VME
@@ -240,22 +229,21 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
              if(cInputMain->pFat_TMCh1[aa] !=0 && cInputMain->pFat_TMCh2[aa] !=0){                 
                  FatimaVME_TimeMachine_dT[aa] =  cInputMain->pFat_TMCh2[aa]-cInputMain->pFat_TMCh1[aa];
                  hFatVME_TMdT->Fill(FatimaVME_TimeMachine_dT[aa]);
-         cOutput->cFatimaVME_TimeMachine_dT[aa] =  FatimaVME_TimeMachine_dT[aa]; 
-         
-        //cout<<"FatimaVME_TimeMachine_dT[aa] " <<FatimaVME_TimeMachine_dT[aa] << " b " << aa << endl;
+		 cOutput->cFatimaVME_TimeMachine_dT[aa] =  FatimaVME_TimeMachine_dT[aa]; 
+
             }
         }
     
      ///Fatima TAMEX
      for(int b=0; b<cInputMain->pFat_LeadHits; b++){
        //cout<<"b " <<b << endl;
-       if(b==0){
+       if(b<10){
         if(cInputMain->pFat_Fast_LeadT[FatTAMEX_TimeMachineCh1][b]!=0 && cInputMain->pFat_Fast_LeadT[FatTAMEX_TimeMachineCh2][b]!=0 ){ 
                 FatimaTAMEX_TimeMachine_dT[b] = (cInputMain->pFat_Fast_LeadT[FatTAMEX_TimeMachineCh2][b]-cInputMain->pFat_Fast_LeadT[FatTAMEX_TimeMachineCh1][b])*5;
 
-             
-        hFatTAMEX_TMdT->Fill(FatimaTAMEX_TimeMachine_dT[b]);
-        cOutput->cFatimaTAMEX_TimeMachine_dT[b] = FatimaTAMEX_TimeMachine_dT[b];
+              //cout<<"FatimaTAMEX_TimeMachine_dT[b] " <<FatimaTAMEX_TimeMachine_dT[b] << " b " << b << endl;
+		hFatTAMEX_TMdT->Fill(FatimaTAMEX_TimeMachine_dT[b]);
+		cOutput->cFatimaTAMEX_TimeMachine_dT[b] = FatimaTAMEX_TimeMachine_dT[b];
         }
       }
      }
@@ -264,8 +252,8 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
          if(cInputMain->pGe_T[Germanium_TimeMachine_Det][Germanium_TimeMachineCh1]!=0 && cInputMain->pGe_T[Germanium_TimeMachine_Det][Germanium_TimeMachineCh2]!=0){       
              Germanium_TimeMachine_dT = cInputMain->pGe_T[Germanium_TimeMachine_Det][Germanium_TimeMachineCh2] - cInputMain->pGe_T[Germanium_TimeMachine_Det][Germanium_TimeMachineCh1];
              hGe_TMdT->Fill(Germanium_TimeMachine_dT);
-         cOutput->cGermanium_TimeMachine_dT=Germanium_TimeMachine_dT;
-        
+	     cOutput->cGermanium_TimeMachine_dT=Germanium_TimeMachine_dT;
+	    
          }
      
       ///bPlastic
@@ -273,117 +261,83 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
 
         if(cInputMain->pbPlas_LeadT[bPLASTIC_ADDITIONAL_CH_MOD][bPlastTimeMachineCh1][c]!=0 && cInputMain->pbPlas_LeadT[bPLASTIC_ADDITIONAL_CH_MOD][bPlastTimeMachineCh2][c]!=0){        
           bPlast_TimeMachine_dT[c] = (cInputMain->pbPlas_LeadT[bPLASTIC_ADDITIONAL_CH_MOD][bPlastTimeMachineCh2][c] - cInputMain->pbPlas_LeadT[bPLASTIC_ADDITIONAL_CH_MOD][bPlastTimeMachineCh1][c])*5;
-      
-      
+	  
+	  
           hbPlastic_TMdT->Fill(bPlast_TimeMachine_dT[c]);
-       cOutput->cbPlast_TimeMachine_dT[c] = bPlast_TimeMachine_dT[c];
+	   cOutput->cbPlast_TimeMachine_dT[c] = bPlast_TimeMachine_dT[c];
         }
       }
       
-     ///AIDA
+     
     int64_t aida_t_o = 0, aida_t_d = 0;
     for (auto sv : cInputMain->pAidaScalers)
     {
       if (sv.Module + 1 == 3) aida_t_o = sv.Time;
       if (sv.Module + 1 == 4) aida_t_d = sv.Time;
     }
-     cOutput->cAIDA_TM_WR = aida_t_o;
-     ///Now fill for WR TM gating 
-     if(aida_t_o){
-        if(cInputMain->pFRS_WR)   hAIDA_WRTM_FRS ->Fill(aida_t_o-cInputMain->pFRS_WR);
-        if(cInputMain->pGe_WR)    hAIDA_WRTM_Ge ->Fill(aida_t_o-cInputMain->pGe_WR);
-        if(cInputMain->pFAT_WR)  hAIDA_WRTM_FatVME ->Fill(aida_t_o-cInputMain->pFAT_WR);
-        if(cInputMain->pFAT_Tamex_WR)  hAIDA_WRTM_FatTAMEX ->Fill(aida_t_o-cInputMain->pFAT_Tamex_WR);
-        if(cInputMain->pbPLAS_WR) hAIDA_WRTM_bPlast ->Fill(aida_t_o-cInputMain->pbPLAS_WR);
-     }
+     
      AIDA_TimeMachine_dT=0;
      if (aida_t_o && aida_t_d) AIDA_TimeMachine_dT = aida_t_d - aida_t_o;
      if (AIDA_TimeMachine_dT)
       hAida_TMdT->Fill(AIDA_TimeMachine_dT);
      cOutput->cAIDA_TimeMachine_dT = AIDA_TimeMachine_dT;
-
+    
+    
+     
      
      ///Now cross correlate
     
      for(int a=0; a<10; a++){
-          ///Fatima VME vs Fatima TAMEX (WR gate 13.)
+          ///Fatima VME vs Fatima TAMEX
          if(cOutput->cFatimaVME_TimeMachine_dT[a]!=0 && cOutput->cFatimaTAMEX_TimeMachine_dT[a]!=0){
-             if((cInputMain->pFAT_WR-cInputMain->pFAT_Tamex_WR)>fCorrel->GFat_Fattam_TLow && (cInputMain->pFAT_WR-cInputMain->pFAT_Tamex_WR)<fCorrel->GFat_Fattam_THigh){
-            
-                 hFatVME_FatTAMEX_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cFatimaTAMEX_TimeMachine_dT[a]);  
-            }
+             hFatVME_FatTAMEX_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cFatimaTAMEX_TimeMachine_dT[a]);  
          }
      
-     ///Fatima VME vs Germanium (WR gate 14.)
+     ///Fatima VME vs Germanium
   
         if(cOutput->cFatimaVME_TimeMachine_dT[a]!=0 &&  cOutput->cGermanium_TimeMachine_dT!=0){
-             if((cInputMain->pFAT_WR-cInputMain->pGe_WR)>fCorrel->GFat_Ge_TLow && (cInputMain->pFAT_WR-cInputMain->pGe_WR)<fCorrel->GFat_Ge_THigh){
-            
-                 hFatVME_Ge_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cGermanium_TimeMachine_dT);
-             }
+            hFatVME_Ge_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cGermanium_TimeMachine_dT);
+	  
+	
         }
      
-     ///Fatima VME bPlast (WR gate 10.)
-     
+     ///Fatima VME bPlast
         if(cOutput->cFatimaVME_TimeMachine_dT[a]!=0 && cOutput->cbPlast_TimeMachine_dT[a]!=0){
-            
-             if((cInputMain->pbPLAS_WR-cInputMain->pFAT_WR)>fCorrel->GbPlas_Fat_TLow && (cInputMain->pbPLAS_WR-cInputMain->pFAT_WR)<fCorrel->GbPlas_Fat_THigh){
-                 
-                hFatVME_bPlast_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cbPlast_TimeMachine_dT[a]);
-            }
+            hFatVME_bPlast_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cbPlast_TimeMachine_dT[a]);
         }
      
-     ///Fatima VME AIDA (WR gate 18.)
+     ///Fatima VME AIDA
         if(cOutput->cFatimaVME_TimeMachine_dT[a]!=0 && cOutput->cAIDA_TimeMachine_dT!=0){
-             if((cOutput->cAIDA_TM_WR-cInputMain->pFAT_WR)>fCorrel->GAIDA_TM_Fat_TLow && (cOutput->cAIDA_TM_WR-cInputMain->pFAT_WR)<fCorrel->GAIDA_TM_Fat_THigh){
-                 
-                hFatVME_AIDA_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cAIDA_TimeMachine_dT);
-             }
+            hFatVME_AIDA_TM->Fill(cOutput->cFatimaVME_TimeMachine_dT[a], cOutput->cAIDA_TimeMachine_dT);
+
         }
      
      
-     ///FATIMA TAMEX Germanium (WR gate 15.)
+     ///FATIMA TAMEX Germanium
      if(cOutput->cFatimaTAMEX_TimeMachine_dT[a]!=0 && cOutput->cGermanium_TimeMachine_dT!=0){
-          if((cInputMain->pFAT_Tamex_WR-cInputMain->pGe_WR)>fCorrel->GFattam_Ge_TLow && (cInputMain->pFAT_Tamex_WR-cInputMain->pGe_WR)<fCorrel->GFattam_Ge_THigh){
-              
-            hFatTAMEX_Ge_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cGermanium_TimeMachine_dT);
+        hFatTAMEX_Ge_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cGermanium_TimeMachine_dT);
       }
-     }
-      ///Fatima TAMEX bPlast (WR gate 11.)
+      ///Fatima TAMEX bPlast
         if(cOutput->cFatimaTAMEX_TimeMachine_dT[a]!=0&& cOutput->cbPlast_TimeMachine_dT[a]!=0){
-            if((cInputMain->pbPLAS_WR-cInputMain->pFAT_Tamex_WR)>fCorrel->GbPlas_Fattam_TLow && (cInputMain->pbPLAS_WR-cInputMain->pFAT_Tamex_WR)<fCorrel->GbPlas_Fattam_THigh){
-       
-                hFatTAMEX_bPlast_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cbPlast_TimeMachine_dT[a]);
-            }
-        }
-        
-      ///Fatima TAMEX AIDA (WR gate 19.)
+       hFatTAMEX_bPlast_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cbPlast_TimeMachine_dT[a]);
+      }
+      ///Fatima TAMEX AIDA
         if(cOutput->cFatimaTAMEX_TimeMachine_dT[a]!=0 && cOutput->cAIDA_TimeMachine_dT!=0){
-             if((cOutput->cAIDA_TM_WR-cInputMain->pFAT_Tamex_WR)>fCorrel->GAIDA_TM_Fattam_TLow && (cOutput->cAIDA_TM_WR-cInputMain->pFAT_Tamex_WR)<fCorrel->GAIDA_TM_Fattam_THigh){
-                 
-                hFatTAMEX_AIDA_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cAIDA_TimeMachine_dT);
-            }
-        }
-      
-       ///Germanium bPlast (WR gate 12.)
+        hFatTAMEX_AIDA_TM->Fill(cOutput->cFatimaTAMEX_TimeMachine_dT[a], cOutput->cAIDA_TimeMachine_dT);
+      }
+      ///Germanium bPlast
+       ///Germanium bPlast
     if(cOutput->cGermanium_TimeMachine_dT!=0 && cOutput->cbPlast_TimeMachine_dT[a]!=0){
-         if((cInputMain->pbPLAS_WR-cInputMain->pGe_WR)>fCorrel->GbPlast_Ge_TLow && (cInputMain->pbPLAS_WR-cInputMain->pGe_WR)<fCorrel->GbPlast_Ge_THigh){
-            hGe_bPlast_TM->Fill(cOutput->cGermanium_TimeMachine_dT,cOutput->cbPlast_TimeMachine_dT[a]);
-        }
-    }
+  hGe_bPlast_TM->Fill(cOutput->cGermanium_TimeMachine_dT,cOutput->cbPlast_TimeMachine_dT[a]);
+   }
      
-     ///Germanium AIDA  (WR gate 17.)
+     ///Germanium AIDA
         if(cOutput->cGermanium_TimeMachine_dT!=0 && cOutput->cAIDA_TimeMachine_dT!=0){
-             if((cOutput->cAIDA_TM_WR-cInputMain->pGe_WR)>fCorrel->GAIDA_TM_Ge_TLow && (cOutput->cAIDA_TM_WR-cInputMain->pGe_WR)<fCorrel->GAIDA_TM_Ge_THigh){
-                hGe_AIDA_TM->Fill(cOutput->cGermanium_TimeMachine_dT, cOutput->cAIDA_TimeMachine_dT);
-            }
-        }
-        
-     ///AIDA bPlast  (WR gate 20.)
+    hGe_AIDA_TM->Fill(cOutput->cGermanium_TimeMachine_dT, cOutput->cAIDA_TimeMachine_dT);
+     }
+     ///AIDA bPlast
         if(cOutput->cAIDA_TimeMachine_dT!=0 && cOutput->cbPlast_TimeMachine_dT[a]!=0){
-            if((cOutput->cAIDA_TM_WR-cInputMain->pbPLAS_WR)>fCorrel->GAIDA_TM_bPlast_TLow && (cOutput->cAIDA_TM_WR-cInputMain->pbPLAS_WR)<fCorrel->GAIDA_TM_bPlast_THigh){
-                hAIDA_bPlast_TM->Fill(cOutput->cAIDA_TimeMachine_dT,cOutput->cbPlast_TimeMachine_dT[a]);
-            }
+    hAIDA_bPlast_TM->Fill(cOutput->cAIDA_TimeMachine_dT,cOutput->cbPlast_TimeMachine_dT[a]);
         }
      }
 }
@@ -400,8 +354,6 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
      // hA_FRS_Z1Z2_implants_e_xy.resize(conf->DSSDs());
       
       hA_Imp_FRS_dT = MakeTH1('I',"WR/AIDA/Aida_Implant-FRS_WR_dT","White Rabbit Aida Implant-FRS ",16000,-40000,40000);
-      
-      hAida_Implant_deadtime = MakeTH1('I',"WR/DeadTime/Aida_implant_deadtime","Dead Time AIDA implant", 500, 0, 500,"WR dT(Aida Implant)[us]", "Counts");
        
      
      for (int i = 0; i < conf->DSSDs(); ++i)
@@ -421,13 +373,14 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
         
         hA_FRS_ZAoQ_implants_position[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/All/Z1vsAoQ/Z1vsAoQ_Gate%d/DSSD_Position/DSSD%d_implant_Position_Z1vsAoQ_Gate%d", gate, i+1,gate), Form("DSSD %d implant position Z vs AoQ Gate %d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
         
-        hA_FRS_ZAoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1vsAoQ/Z1vsAoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1vsAoQ_Gate%d", gate,i+1,gate), Form("DSSD %d implant energy FRS AoQ vs Z Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_ZAoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1vsAoQ/Z1vsAoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1vsAoQ_Gate%d", gate,i+1,gate), Form("DSSD %d implant energy FRS AoQ vs Z Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
         
         hA_FRS_ZAoQ_implants_strip_xy_stopped[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsAoQ/Z1vsAoQ_Gate%d/DSSD_XY/DSSD%d_implants_stopped_strip_XY_Z1vsAoQ_Gate%d",gate, i+1,gate), Form("DSSD %d stopped implant hit pattern FRS Z1vsAoQ Gate%d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
         
         hA_FRS_ZAoQ_implants_position_stopped[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsAoQ/Z1vsAoQ_Gate%d/DSSD_Position/DSSD%d_implant_stopped_Position_Z1vsAoQ_Gate%d", gate, i+1,gate), Form("DSSD %d implant stopped position Z vs AoQ Gate%d ", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
            
-        hA_FRS_ZAoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsAoQ/Z1vsAoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1vsAoQ_Gate%d", gate,i+1,gate), Form("DSSD %d stopped implant energy FRS AoQ vs Z Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_ZAoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsAoQ/Z1vsAoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1vsAoQ_Gate%d", gate,i+1,gate), Form("DSSD %d stopped implant energy FRS AoQ vs Z Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
+        
         
         
         hA_FRS_Z1Z2_implants_strip_xy[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/All/Z1vsZ2/Z1vsZ2_Gate%d/DSSD_XY/DSSD%d_implants_strip_XY_Z1Z2g%d", gate,i+1,gate), Form("DSSD %d implant hit pattern, FRS Z1 Z2 Gate %d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
@@ -437,12 +390,24 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
         hA_FRS_Z1Z2_implants_strip_xy_stopped[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsZ2/Z1vsZ2_Gate%d/DSSD_XY/DSSD%d_implants_stopped_strip_XY_Z1Z2g%d", gate,i+1,gate), Form("DSSD %d implant hit pattern, FRS Z1 Z2 Gate %d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
         
         hA_FRS_Z1Z2_implants_position_stopped[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsZ2/Z1vsZ2_Gate%d/DSSD_Position/DSSD%d_implants_stopped_Position_Z1vsZ2_Gate%d", gate, i+1,gate), Form("DSSD %d implant stopped position Z1 Z2 Gate%d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
+	
+	
+	
+	//Z1_SC42 gates
+	hA_FRS_Z1SC_implants_strip_xy[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/All/Z1vsSC/Z1vsSC_Gate%d/DSSD_XY/DSSD%d_implants_strip_XY_Z1SCg%d", gate,i+1,gate), Form("DSSD %d implant hit pattern, FRS Z1 SC Gate %d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
+        
+        hA_FRS_Z1SC_implants_position[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/All/Z1vsSC/Z1vsSC_Gate%d/DSSD_Position/DSSD%d_implant_Position_Z1vsSC_Gate%d", gate, i+1,gate), Form("DSSD %d implant position FRS Z1 SC gate %d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
+        
+        hA_FRS_Z1SC_implants_strip_xy_stopped[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsSC/Z1vsSC_Gate%d/DSSD_XY/DSSD%d_implants_stopped_strip_XY_Z1SCg%d", gate,i+1,gate), Form("DSSD %d implant hit pattern, FRS Z1 SC Gate %d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
+        
+        hA_FRS_Z1SC_implants_position_stopped[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1vsSC/Z1vsSC_Gate%d/DSSD_Position/DSSD%d_implants_stopped_Position_Z1vsSC_Gate%d", gate, i+1,gate), Form("DSSD %d implant stopped position Z1 SC Gate%d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
         
     
+        
         ///Z1Z2 X2AoQ
         hA_FRS_Z1Z2_x2AoQ_implants_strip_xy[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x2AoQ/Z1Z2_x2AoQ_Gate%d/DSSD_XY/DSSD%d_implants_strip_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant hit pattern FRS Z1Z2_x2AoQ_Gate Gate%d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
            
-        hA_FRS_Z1Z2_x2AoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x2AoQ/Z1Z2_x2AoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant energy FRS Z1Z2_x2AoQ_Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_Z1Z2_x2AoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x2AoQ/Z1Z2_x2AoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant energy FRS Z1Z2_x2AoQ_Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
         
         hA_FRS_Z1Z2_x2AoQ_implants_position[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x2AoQ/DSSD_Position/Z1Z2_x2AoQ_Gate%d/DSSD_Position/DSSD%d_implants_Position_Z1Z2_x2AoQ_Gate%d", gate, i+1,gate), Form("DSSD %d implant position Z1Z2_x2AoQ Gate%d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
         
@@ -450,12 +415,14 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
         
         hA_FRS_Z1Z2_x2AoQ_implants_strip_xy_stopped[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x2AoQ/Z1Z2_x2AoQ_Gate%d/DSSD_XY/DSSD%d_implants_stopped_strip_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant hit pattern FRS Z1Z2_x2AoQ_Gate Gate%d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
            
-        hA_FRS_Z1Z2_x2AoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x2AoQ/Energy/Z1Z2_x2AoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d stopped implant energy FRS Z1Z2_x2AoQ_Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_Z1Z2_x2AoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x2AoQ/Energy/Z1Z2_x2AoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1Z2_x2AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d stopped implant energy FRS Z1Z2_x2AoQ_Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
+        
+        
         
         ///Z1Z2 X4AoQ
         hA_FRS_Z1Z2_x4AoQ_implants_strip_xy[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/DSSD_XY/DSSD%d_implants_strip_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant hit pattern FRS Z1Z2_x4AoQ_Gate Gate%d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
            
-        hA_FRS_Z1Z2_x4AoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant energy FRS Z1Z2_x4AoQ_Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_Z1Z2_x4AoQ_implants_e[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/Energy/DSSD%d_implants_energy_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant energy FRS Z1Z2_x4AoQ_Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
         
         hA_FRS_Z1Z2_x4AoQ_implants_position[gate][i] = MakeTH2('D', Form("Correlations/AIDA-FRS/Implants/All/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/DSSD_Position/DSSD%d_implants_Position_Z1Z2_x4AoQ_Gate%d", gate, i+1,gate), Form("DSSD %d implant position Z1Z2_x4AoQ Gate%d", i+1,gate), 128, -37.8, 37.8, 128, -37.8, 37.8, "X position/mm", "Y position/mm");
         
@@ -463,11 +430,13 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
         
         hA_FRS_Z1Z2_x4AoQ_implants_strip_xy_stopped[gate][i] = MakeTH2('I', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/DSSD_XY/DSSD%d_implants_stopped_strip_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d implant hit pattern FRS Z1Z2_x4AoQ_Gate Gate%d", i+1,gate), 128, 0, 128, 128, 0, 128, "X strip", "Y strip");
            
-        hA_FRS_Z1Z2_x4AoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d stopped implant energy FRS Z1Z2_x4AoQ_Gate%d", i+1,gate), 2000, 0, 20000, "Implant Energy/MeV");
+        hA_FRS_Z1Z2_x4AoQ_implants_e_stopped[gate][i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Stopped/Z1Z2_x4AoQ/Z1Z2_x4AoQ_Gate%d/Energy/DSSD%d_implants_stopped_energy_Z1Z2_x4AoQ_Gate%d",gate, i+1,gate), Form("DSSD %d stopped implant energy FRS Z1Z2_x4AoQ_Gate%d", i+1,gate), 1000, 0, 10000, "Implant Energy/MeV");
         
         }
 //         
-
+       
+       
+       
       /* // hA_FRS_ZAoQ_implants_e_xy[i] = MakeTH2('F', Form("Correlations/AIDA-FRS/Implants/Z1Z2_x2AoQ_Gate/DSSD%d_implants_energy_XY_Z1Z2IDx2AoQg", i+1), Form("DSSD %d implant front energy vs back energy FRS Z1 Z2, and X2AoQ or X4AoQ And ZAoQ gated", i+1), 1000, 0, 10000, 1000, 0, 10000, "X Energy", "Y Energy");
         hA_FRS_ZAoQ_implants_time_delta[i] = MakeTH1('F', Form("Correlations/AIDA-FRS/Implants/Z1Z2_x2AoQ_Gate/DSSD%d_implants_time_delta_Z1Z2IDx2AoQg", i+1), Form("DSSD %d implant front vs back time FRS Z1 Z2, and X2AoQ And X4AoQ gated And ZAoQ", i+1), 1000, -10000, 10000, "Time Difference/ns");
         
@@ -478,23 +447,23 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
     }
      ///2D AIDA Ion position Gates DSSD 1-3
   
-//     Float_t init_ID_AIDA_ION_DSSD1[7][2] =
-//     
-//     {{34, 55.45},{37,50.5},{40, 50.5}, {41, 59}, {37,60}, {33,60}, {34, 55}}; 
-//    
-//     Float_t init_ID_AIDA_ION_DSSD2[7][2] =
-//      {{0.0, 0.0},{40.0, 0.0},{80.0, 0.0}, {128.0, 0.0}, {128.0, 126.0}, {0.0, 128.0}, {0.0, 0.0}}; 
-//     
-//     Float_t init_ID_AIDA_ION_DSSD3[7][2] =
-//       {{0.0, 0.0},{40.0, 0.0},{80.0, 0.0}, {128.0, 0.0}, {128.0, 126.0}, {0.0, 128.0}, {0.0, 0.0}};  
+    Float_t init_ID_AIDA_ION_DSSD1[7][2] =
+    
+    {{34, 55.45},{37,50.5},{40, 50.5}, {41, 59}, {37,60}, {33,60}, {34, 55}}; 
+   
+    Float_t init_ID_AIDA_ION_DSSD2[7][2] =
+     {{0.0, 0.0},{40.0, 0.0},{80.0, 0.0}, {128.0, 0.0}, {128.0, 126.0}, {0.0, 128.0}, {0.0, 0.0}}; 
+    
+    Float_t init_ID_AIDA_ION_DSSD3[7][2] =
+      {{0.0, 0.0},{40.0, 0.0},{80.0, 0.0}, {128.0, 0.0}, {128.0, 126.0}, {0.0, 128.0}, {0.0, 0.0}};  
       
      
     
-//       cAIDA_IMPgate_DSSD1 = MakePolyCond("cID_AIDA_IMP_DSSD1","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD1, "AIDA Implantation DSSD1");
-//       
-//       cAIDA_IMPgate_DSSD2 = MakePolyCond("cID_AIDA_IMP_DSSD2","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD2, "AIDA Implantation DSSD2");
-//       
-//       cAIDA_IMPgate_DSSD3 = MakePolyCond("cID_AIDA_IMP_DSSD3","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD3, "AIDA Implantation DSSD3");
+      cAIDA_IMPgate_DSSD1 = MakePolyCond("cID_AIDA_IMP_DSSD1","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD1, "AIDA Implantation DSSD1");
+      
+      cAIDA_IMPgate_DSSD2 = MakePolyCond("cID_AIDA_IMP_DSSD2","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD2, "AIDA Implantation DSSD2");
+      
+      cAIDA_IMPgate_DSSD3 = MakePolyCond("cID_AIDA_IMP_DSSD3","FRS Gated AIDA ion pos DSSD1",7,init_ID_AIDA_ION_DSSD3, "AIDA Implantation DSSD3");
       
      
      
@@ -520,26 +489,36 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
         if (lastAIDAWR == 0) {
           lastAIDAWR = hit.Time;
         } else {
-    
-        hAida_Implant_deadtime->Fill((long long)(hit.Time - lastAIDAWR)/1000);
+	
+     //     hAida_Implant_deadtime->Fill((long long)(hit.Time - lastAIDAWR)/1000);
           lastAIDAWR = hit.Time;
         }
-      }///End of AIDA Implant deadtime
+      }///End of AIDA Implant deatime
 
-      //AIDA Implant - FRS WR dT
-        if(hit.Time>0 && cInputMain->pFRS_WR>0)hA_Imp_FRS_dT -> Fill(hit.Time-cInputMain->pFRS_WR); 
-      
+             if(hit.Time>0 && cInputMain->pFRS_WR>0){
+               
+                hA_Imp_FRS_dT -> Fill(hit.Time-cInputMain->pFRS_WR); 
+        }   
      if(hit.Time-cInputMain->pFRS_WR > fCorrel->GFRS_AIDA_TLow && hit.Time-cInputMain->pFRS_WR < fCorrel->GFRS_AIDA_THigh){    
        
       for(int gate=0; gate<MAX_FRS_GATE;gate++){
         
     ///Gate on FRS Z vs AoQ -> AIDA Implantation
           if(cInputMain->pFRS_ZAoQ_pass[gate]==true ){  
-
+      
+        
+   
+              
          hA_FRS_ZAoQ_implants_strip_xy[gate][hit.DSSD - 1]->Fill(hit.StripX, hit.StripY);
          hA_FRS_ZAoQ_implants_e[gate][hit.DSSD - 1]->Fill(hit.Energy);
          hA_FRS_ZAoQ_implants_position[gate][hit.DSSD - 1]->Fill(hit.PosX, hit.PosY);
                }
+       
+        ///Gate on FRS Z1 SC42  -> AIDA Implantation 
+        if(cInputMain->pFRS_Z_SC_pass[gate]==true ){  
+            hA_FRS_Z1SC_implants_strip_xy[gate][hit.DSSD - 1]->Fill(hit.StripX, hit.StripY);
+            hA_FRS_Z1SC_implants_position[gate][hit.DSSD - 1]->Fill(hit.PosX, hit.PosY);
+	    }
        
        ///Gate on FRS Z1 Z2  -> AIDA Implantation      
         if(cInputMain->pFRS_Z_Z2_pass[gate]==true ){  
@@ -578,6 +557,13 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
          hA_FRS_ZAoQ_implants_position_stopped[gate][hit.DSSD - 1]->Fill(hit.PosX, hit.PosY);
                }
                
+	     ///Gate on FRS Z1 SC42  -> AIDA Implantation   
+	    if(cInputMain->pFRS_Z_SC_pass[gate]==true ){ 
+          
+            hA_FRS_Z1SC_implants_strip_xy_stopped[gate][hit.DSSD - 1]->Fill(hit.StripX, hit.StripY);
+            hA_FRS_Z1SC_implants_position_stopped[gate][hit.DSSD - 1]->Fill(hit.PosX, hit.PosY);
+		}
+   
              ///Gate on FRS Z1 vs Z2-> AIDA Stopped Implantation
           if(cInputMain->pFRS_Z_Z2_pass[gate]==true ){ 
           
@@ -613,8 +599,12 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
       
 //       hA_FRSWR_GeWR =  MakeTH1('I',"Correlations/FRS-Prompt_Ge/FRS-Ge_WR_dT","T Diff FRS WR -Germanium WR ",10000,-10000,10000,"Time[ns]", "Counts");
       
-     // hA_FRS_GeE = MakeTH1('D', "Correlations/FRS-Prompt_Ge/Ge_EnergySum_allFRS", "Germanium Energy FRS (all) gated",6000, 0, 6000);
-      hA_FRS_ZAoQ_GeEvsT_all= MakeTH2('D',"Correlations/FRS-Prompt_Ge/Z1vsAoQ_Ge/GeE_vs_FRSGe_dT_Z1vsAoQ_All","Ge vs T all", 2100,-1000,20000,fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax, "FRS - Ge time (ns)", "Ge Energy (keV)");
+      hGe_E_OFF = MakeTH1('D', "Correlations/FRS-Prompt_Ge/Ge_EnergySum_all_SpillOFF", "Germanium Energy FRS (all) Spill OFF",6000, 0, 6000);
+      
+      hGe_E_ON = MakeTH1('D', "Correlations/FRS-Prompt_Ge/Ge_EnergySum_all_SpillON", "Germanium Energy FRS (all) Spill ON",6000, 0, 6000);
+      
+      
+      hA_FRS_ZAoQ_GeEvsT_all= MakeTH2('D',"Correlations/FRS-Prompt_Ge/Z1vsAoQ_Ge/GeE_vs_FRSGe_dT_Z1vsAoQ_All","Ge vs T all", 2100,-1000,20000,fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,"Ge Energy (keV)", "FRS - Ge time (ns)");
       
       for(int i=0; i<MAX_FRS_GATE; i++){
        hA_FRS_ZAoQ_GeE[i]  = MakeTH1('F', Form("Correlations/FRS-Prompt_Ge/Z1vsAoQ_Ge/SinglesEnergy/Ge_EnergySum_Z1vsAoQ_Gate%d", i), Form("Germanium Energy FRS PID gated %d", i), 6000, 0, 6000, "Energy/keV");
@@ -627,7 +617,7 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
        //Z1Z2 X2AoQ
        hA_FRS_Z1Z2_X2AoQ_GeE[i]  = MakeTH1('F', Form("Correlations/FRS-Prompt_Ge/Z1Z2_X2AoQ_Ge/SinglesEnergy/Ge_Energy_Z1Z2_X2AoQGate%d", i), Form("Germanium Energy FRS Z1Z2_X2AoQ Gate %d", i), 2000, 0, 2000, "Energy/keV");
        
-       hA_FRS_Z1Z2_X2AoQ_GeEvsT[i]  = MakeTH2('D',Form("Correlations/FRS-Prompt_Ge/Z1Z2_X2AoQ_Ge/GeE_vs_dT/GeE_vs_FRSGe_dT_Z1Z2_X2AoQGate%d",i),Form("T Diff FRS - Ge vs Ge Energy Z1Z2X4X2AoQ Gate %d",i), 2100,-1000,20000,2000, 0, 2000, "FRS - Ge time (ns)","Ge Energy (keV)");
+       hA_FRS_Z1Z2_X2AoQ_GeEvsT[i]  = MakeTH2('D',Form("Correlations/FRS-Prompt_Ge/Z1Z2_X2AoQ_Ge/GeE_vs_dT/GeE_vs_FRSGe_dT_Z1Z2_X2AoQGate%d",i),Form("T Diff FRS - Ge vs Ge Energy Z1Z2X4X2AoQ Gate %d",i), 2100,-1000,20000,2000, 0, 2000,"Ge Energy (keV)", "FRS - Ge time (ns)");
        
        if(fCorrel->GSetup_corr_FRS_Gamma_Gamma==1){
        hA_FRS_Z1Z2_X2AoQ_GeE1_GeE2[i]  = MakeTH2('D',Form("Correlations/FRS-Prompt_Ge/Z1Z2_X2AoQ_Ge/Gamma-Gamma/GeE1_vs_GeE2_Z1Z2_X2AoQ_Gate%d",i),Form("Gamma-Gamma Z1Z2_X2AoQ_Ge Gated: %d",i), fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,  fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax, "Ge Energy1 (keV)", "Ge Energy2 (keV)");
@@ -685,14 +675,25 @@ Bool_t EventCorrelProc::BuildEvent(TGo4EventElement* dest)
       Ge_FirstT_prompt=0;
 for(int g=0; g<Germanium_MAX_DETS; g++){
             for(int h=0; h<Germanium_CRYSTALS; h++){
-          if(cInputMain->pGe_T[g][h]>0){
+	    
+	    if(g!=Germanium_SC41_Det  && g!=Germanium_SC41_Det_Digi && g!=Germanium_TimeMachine_Det){
+           if(cInputMain->pOnSpill==false) hGe_E_OFF->Fill(cInputMain->pGe_EAddback[g][h]);
+	   if(cInputMain->pOnSpill==true) hGe_E_ON->Fill(cInputMain->pGe_EAddback[g][h]);
+	   }
+	    
+	      if(cInputMain->pGe_T[g][h]>0){
+	      
      hA_FRS_ZAoQ_GeEvsT_all->Fill((cInputMain->pGe_T[g][h] - cInputMain->pGe_T[Germanium_SC41_Det][Germanium_SC41L_Crystal_Digi]),cInputMain->pGe_EAddback[g][h]);
-          }
-        }
+	      }
+	    }
 }
      
     if(cInputMain->pFRS_WR>0 && cInputMain->pGe_WR>0)  dT_frsge_prompt = (cInputMain->pGe_WR - cInputMain->pFRS_WR);
-
+   // if(dT_frsge_prompt!=0) hA_FRSWR_GeWR->Fill(dT_frsge_prompt);
+    
+    
+  
+    
     if(cInputMain->pGe_WR!=0){
      for(int g=0; g<Germanium_MAX_DETS; g++){
             for(int h=0; h<Germanium_CRYSTALS; h++){
@@ -717,7 +718,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
 //       }
      
         ///Cut the prompt flash with 2D poly (accepts events in window)
-        if(cGe_EdT_cut[gate]->Test((cInputMain->pGe_T[g][h] - cInputMain->pGe_T[Germanium_SC41_Det][Germanium_SC41L_Crystal_Digi]),cInputMain->pGe_EAddback[g][h])==true) {
+        //if(cGe_EdT_cut[gate]->Test((cInputMain->pGe_T[g][h] - cInputMain->pGe_T[Germanium_SC41_Det][Germanium_SC41L_Crystal_Digi]),cInputMain->pGe_EAddback[g][h])==true) {
            
                 ///Energy vs WR dT all 
 //                 hA_FRS_GeEvsT->Fill(cInputMain->pGe_EAddback[g][h],dT_frsge_prompt);
@@ -791,7 +792,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                                     } ///End of GeE>1                               
                                 }///End of multiplicity>1 gammas
                            // }///End of prompt flash cut
-                        }///End of gate loop
+                        //}///End of gate loop
                     //}
                 }///End of WR gate
            // }///End of Detector number '8' i.e. Extra signals condition
@@ -837,9 +838,8 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
  void EventCorrelProc::Make_FRS_LongIso_Ge_Histos(){
     
       hA_FRS_ZAoQ_GeE_LongIso  = MakeTH1('F', "Correlations/FRS_LongCorrelation_Ge/Z1vsAoQ_Gated/Ge_SinglesEnergy_LongCorrelationTime", "Long T search GeE", 2000, 0, 2000, "Energy/keV");
-      
            
-      hA_FRS_GeEvsT_LongIsoGated  = MakeTH2('D',"Correlations/FRS_LongCorrelation_Ge/Z1vsAoQ_Gated/dT_vs_GeE_LongCorrelationTime","Long T search dT vs GeE", fCorrel->GFRS_Ge_LongIso_HBin,fCorrel->GFRS_Ge_LongIso_HLow,fCorrel->GFRS_Ge_LongIso_HHigh,fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,"dT(mus)", "Ge Energy (keV)");
+      hA_FRS_GeEvsT_LongIsoGated  = MakeTH2('D',"Correlations/FRS_LongCorrelation_Ge/Z1vsAoQ_Gated/dT_vs_GeE_LongCorrelationTime","Long T search dT vs GeE", fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,fCorrel->GFRS_Ge_LongIso_HBin,fCorrel->GFRS_Ge_LongIso_HLow,fCorrel->GFRS_Ge_LongIso_HHigh,"Ge Energy (keV)", "dT(mus)");
       
       hA_FRS_GeE1vsGeE2_LongIsoGated  = MakeTH2('D',"Correlations/FRS_LongCorrelation_Ge/Z1vsAoQ_Gated/GeE1_vs_GeE2_LongCorrelationTime","Gamma-Gamma Long isomer gated", fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,"Ge Energy1 (keV)", "Ge Energy2 (keV)");
     }
@@ -871,27 +871,22 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                     
                     if(cInputMain->pFRS_ZAoQ_pass[fCorrel->GLongIso_PID_Gate]==true && cInputMain-> pFRS_WR!=0){
                         ts= cInputMain-> pFRS_WR;
-                       
                     }
                   
                   else if (cInputMain-> pGe_WR>0){
             
                         ts=cInputMain-> pGe_WR;
-                       
-                  
                     }
     }
           ///------ reset the local variables in case the time is too long ------//
          if(tag_all.size()>0)
              {
-                 for(uint i=0; i<tag_all.size();i++)
+                 for(int i=0; i<tag_all.size();i++)
                      {
-                       
                  ///The reset time windows are set in Configuration_Files/DESPEC_General_Setup/Correlations_config.dat                 
-                   if((ts-ts_all.at(i))>fCorrel->GFRS_Ge_LongIso_THigh || cInputMain->pFRS_WR>0)
-                    
+                   if((ts-ts_all.at(i))>fCorrel->GFRS_Ge_LongIso_THigh )
+
                              {
-                                 
                                  tag_all.erase(tag_all.begin()+i);
                                  ts_all.erase(ts_all.begin()+i);
                           
@@ -903,7 +898,6 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
              if(cInputMain->pFRS_WR>0  && cInputMain->pFRS_ZAoQ_pass[fCorrel->GLongIso_PID_Gate]==true){
                     if(tag_all.size()==0)
                         { 
-                        
                          tag_all.push_back(1);
                          ts_all.push_back(ts);
                         }
@@ -914,12 +908,11 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
   
             for(int i=(tag_all.size()-1); i>=0; i--)
                              {
-                                  //cout<<"ts-ts_all.at(i) "<<ts-ts_all.at(i) << endl;
             /// ---------- frs-gamma long correlations -------  //
                  if(tag_all.at(i)==1 &&  (ts-ts_all.at(i))>fCorrel->GFRS_Ge_LongIso_TLow) {
-                    
+                     
                                    dT_frsge_long=ts-ts_all.at(i);
-                                   //cout<<"dT_frsge_long " <<dT_frsge_long/1000<<endl;
+                                   
                     for(int g=0; g<Germanium_MAX_DETS; g++){
                             for (int h=0; h<Germanium_CRYSTALS; h++){
 
@@ -938,9 +931,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                         
                     hA_FRS_ZAoQ_GeE_LongIso->Fill(cInputMain->pGe_EAddback[g][h]);
                                     
-                    hA_FRS_GeEvsT_LongIsoGated->Fill(dT_frsge_long/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pGe_EAddback[g][h]);
-                   // cout<<"SING dT_frsge_long/fCorrel->GFRS_Ge_LongIso_TScale " <<dT_frsge_long/fCorrel->GFRS_Ge_LongIso_TScale << " cInputMain->pGe_EAddback[g][h] " <<cInputMain->pGe_EAddback[g][h] << endl;
-                    
+                    hA_FRS_GeEvsT_LongIsoGated->Fill(cInputMain->pGe_EAddback[g][h],dT_frsge_long/fCorrel->GFRS_Ge_LongIso_TScale);
                             }
                         
                 ///This is for when there is more than 1 gamma in an event to get the correct time                    
@@ -950,9 +941,8 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                                  
                          if(cInputMain->pGe_EAddback[g][h]>10 && dT_frsge_mult_long>0){
                              
-                            hA_FRS_GeEvsT_LongIsoGated->Fill(dT_frsge_mult_long/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pGe_EAddback[g][h]);
+                            hA_FRS_GeEvsT_LongIsoGated->Fill(cInputMain->pGe_EAddback[g][h],dT_frsge_mult_long/fCorrel->GFRS_Ge_LongIso_TScale);
                             hA_FRS_ZAoQ_GeE_LongIso->Fill(cInputMain->pGe_EAddback[g][h]);
-                           
                                  }
                               }                                           
                           }         
@@ -962,19 +952,11 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                 for(int m=0; m<Ge_mult_long; m++){
                 for(int n=0; n<Ge_mult_long; n++){
                 if(m==n) continue;
-                 // if((GeT_Long[m]-GeT_Long[n])>fCorrel->GGe1_Ge2_Low && (GeT_Long[m]-GeT_Long[n])<fCorrel->GGe1_Ge2_High){
+                  if((GeT_Long[m]-GeT_Long[n])>fCorrel->GGe1_Ge2_Low && (GeT_Long[m]-GeT_Long[n])<fCorrel->GGe1_Ge2_High){
 
                  hA_FRS_GeE1vsGeE2_LongIsoGated->Fill(GeE_Long[m],GeE_Long[n]);
-                
-//                 if(dT_frsge_mult_long!=0 ){
-//                     if(GeE_Long[n]<700 && ((GeT_Long[m]-GeT_Long[n])>-20&& (GeT_Long[m]-GeT_Long[n])<20)){
-//                    if(GeE_Long[m]>0)  {
-//                     hA_FRS_ZAoQ_GeE_LongIso_gcut->Fill(GeE_Long[m]);
-//                     hA_FRS_GeEvsT_LongIsoGated_gcut->Fill(GeE_Long[m],dT_frsge_mult_long/fCorrel->GFRS_Ge_LongIso_TScale);
-//                    }
-//                 }
-//                                    
-//                        }
+                                
+                        }
                     }
                 } 
             }
@@ -1005,8 +987,6 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                      ///Energy vs  dT
                     hA_FRS_ZAoQ_GeE_LongIso->Fill(cInputMain->pGe_EAddback[g][h]);
                     hA_FRS_GeEvsT_LongIsoGated->Fill(dT_frsge_prompt/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pGe_EAddback[g][h]);
-                    
-                    
                  }
                             
               ///Correct the times for more than one gamma in an event
@@ -1030,22 +1010,10 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                //Gamma gamma for the long isomers, prompt part (needs testing)
                 for(int m=0; m<Ge_mult_prompt; m++){
                 for(int n=0; n<Ge_mult_prompt; n++){
-            if(GeE_Prm_Long[m]>0 && GeE_Prm_Long[n]>0){
-                if(m==n) continue;
-
-//                 if(GeE_Prm_Long[n]<700 && ((GeT_Prm_Long[m]-GeT_Prm_Long[n])>-20&& (GeT_Prm_Long[m]-GeT_Prm_Long[n])<20)){
-//                     if(dT_frsge_mult_prompt!=0 ){
-// 
-//                     hA_FRS_GeEvsT_LongIsoGated_gcut->Fill(GeE_Prm_Long[m],dT_frsge_mult_prompt/fCorrel->GFRS_Ge_LongIso_TScale);
-//     
-//                     if(GeE_Prm_Long[m]>0)hA_FRS_ZAoQ_GeE_LongIso_gcut->Fill(GeE_Prm_Long[m]);
-//                     }
-//                 }
-                
-                
+                    if(GeE_Prm_Long[m]>0 && GeE_Prm_Long[n]>0){
+                    if(m==n) continue;
                   if((GeT_Prm_Long[m]-GeT_Prm_Long[n])>fCorrel->GGe1_Ge2_Low && (GeT_Prm_Long[m]-GeT_Prm_Long[n])<fCorrel->GGe1_Ge2_High){
-                            
-                      
+                
                       if(cGe_EdT_cut[fCorrel->GLongIso_PID_Gate]->Test(dT_frsge_prompt,GeE_Prm_Long[m])==true && cGe_EdT_cut[fCorrel->GLongIso_PID_Gate]->Test(dT_frsge_prompt,GeE_Prm_Long[n])==true) {
                     
                 if(cInputMain->pFRS_ZAoQ_pass[fCorrel->GLongIso_PID_Gate]==true)    hA_FRS_GeE1vsGeE2_LongIsoGated->Fill(GeE_Prm_Long[m],GeE_Prm_Long[n]);
@@ -1106,7 +1074,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
           ///ZAoQ
       hA_FRS_ZAoQ_FatE[i]  = MakeTH1('F', Form("Correlations/FRS-Prompt_Fatima/Z1vsAoQ/SinglesEnergy/Fat_EnergySum_Z1vsAoQ_Gate%d", i), Form("Fatima Energy FRS PID gated %d", i), 2000, 0, 2000, "Energy/keV");
       
-      hA_FRS_ZAoQ_FatEvsT[i] = MakeTH2('D',Form("Correlations/FRS-Prompt_Fatima/Z1vsAoQ/FatE_vs_FRSFat_dT/Fat_EdT_ZAoQGate%2d",i), Form("T Diff Fatima T - SCI41 vs Fatima Energy: Z vs AoQ Gate%2d",i),2100,-10000,20000,1250, 0, 2500," Fat T- SCI41 (ns)", "Fatima Energy (keV)"); 
+      hA_FRS_ZAoQ_FatEvsT[i] = MakeTH2('D',Form("Correlations/FRS-Prompt_Fatima/Z1vsAoQ/FatE_vs_FRSFat_dT/Fat_EdT_ZAoQGate%2d",i), Form("T Diff Fatima T - SCI41 vs Fatima Energy: Z vs AoQ Gate%2d",i),2100,-1000,20000,1000, 0, 2000," Fat T- SCI41 (ns)", "Fatima Energy (keV)"); 
       
       hA_FRS_ZAoQ_FatE1vsE2[i] = MakeTH2('D',Form("Correlations/FRS-Prompt_Fatima/Z1vsAoQ/Gamma-Gamma/FatE1_vs_FatE2_Z1vsAoQ_gate%2d",i), Form("Fatima Energy 1 vs Energy 2 Z vs A/Q Gate:%2d",i),2000, 0, 2000, 2000,0,2000); 
       
@@ -1145,6 +1113,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
     char name[50];
       for(int i=0; i<MAX_FRS_GATE; i++){
       
+	
        sprintf(name,"cFat_EdT_cut%d",i);
      
         cFat_EdT_cut[i] = MakePolyCond("cFat_EdT_cut", name, MAX_FRS_PolyPoints, init_Fat_EdT_cut[i], "Fatima Prompt flash cut");
@@ -1163,10 +1132,10 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
           ///Energy WR dT
                  
                  ///WR Time gate FRS-Fatima (global gate)
-//     for(int gate=0;gate<MAX_FRS_GATE;gate++){
+// 	   for(int gate=0;gate<MAX_FRS_GATE;gate++){
 //          if(cInputMain->pFat_TDC_T[k]>0) hA_FRS_ZAoQ_FatEvsT[gate]->Fill((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025, cInputMain->pFat_QDC_E[k]);
-//     }
-     
+// 	   }
+	 
                 if(dT_FRS_Fatima>fCorrel->GFRS_Fat_TLow && dT_FRS_Fatima < fCorrel->GFRS_Fat_THigh){
                   
                     
@@ -1181,7 +1150,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                          ///Cut the prompt flash with 2D poly
         
                     ///This is the Prompt flash cut (accepted)
-      if(cFat_EdT_cut[gate]->Test((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025,cInputMain->pFat_QDC_E[k])==true){
+      //if(cFat_EdT_cut[gate]->Test((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025,cInputMain->pFat_QDC_E[k])==true){
              
                          ///Z vs A/Q spectra
                    
@@ -1232,7 +1201,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
                                 
                             }
                         }
-                    }
+                    //}
                 }
             }
         }
@@ -1325,7 +1294,7 @@ for(int g=0; g<Germanium_MAX_DETS; g++){
     
       hA_FRS_PID_FatE_LongIso  = MakeTH1('F', "Correlations/FRS-LongIso_Fat/ZvsAoQ_Fat/LongdT_Fat_EnergySum_PIDGated", "Long T isomer search FatE", 4000, 0, 4000, "Energy/keV");
            
-      hA_FRS_FatEvsT_LongIsoGated  = MakeTH2('D',"Correlations/FRS-LongIso_Fat/ZvsAoQ_Fat/LongdT_vs_FatE_PIDGated","Long T isomer search dT vs GeE",  fCorrel->GFRS_Ge_LongIso_HBin,fCorrel->GFRS_Ge_LongIso_HLow,fCorrel->GFRS_Ge_LongIso_HHigh,4000, 0, 4000,"dT", "Fat Energy (keV)");
+      hA_FRS_FatEvsT_LongIsoGated  = MakeTH2('D',"Correlations/FRS-LongIso_Fat/ZvsAoQ_Fat/LongdT_vs_FatE_PIDGated","Long T isomer search dT vs GeE", 4000, 0, 4000, fCorrel->GFRS_Ge_LongIso_HBin,fCorrel->GFRS_Ge_LongIso_HLow,fCorrel->GFRS_Ge_LongIso_HHigh,"Fat Energy (keV)", "dT");
       
       hA_FRS_FatE1vsFatE2_LongIsoGated  = MakeTH2('D',"Correlations/FRS-LongIso_Fat/FatE1_vs_FatE2_LongIsomer","Gamma-Gamma Long isomer gated", 2000, 0, 2000, 2000,0,2000,"Fat Energy1 (keV)", "Fat Energy2 (keV)");
       
@@ -1368,18 +1337,18 @@ void EventCorrelProc::Process_FRS_LongIso_Fat(EventAnlStore* cInputMain, EventCo
                     }
     }
           ///------ reset the local variables in case the time is too long ------//
-         if(tag_fat_all.size()>0)
-             {
-                 for(uint i=0; i<tag_fat_all.size();i++)
-                     {
+		 if(tag_all.size()>0)
+			 {
+				 for(int i=0; i<tag_fat_all.size();i++)
+					 {
                  ///The reset time windows are set in Configuration_Files/correlations.dat                 
                    if((ts_fat-ts_fat_all.at(i))>fCorrel->GFRS_Ge_LongIso_THigh )
 
-                             {
-                                 tag_fat_all.erase(tag_fat_all.begin()+i);
-                                 ts_fat_all.erase(ts_fat_all.begin()+i);
+							 {
+								 tag_fat_all.erase(tag_fat_all.begin()+i);
+								 ts_fat_all.erase(ts_fat_all.begin()+i);
                           
-                             }
+							 }
                      }
              }///End of removing/clearing arrays for long correlations
              
@@ -1397,10 +1366,10 @@ void EventCorrelProc::Process_FRS_LongIso_Fat(EventAnlStore* cInputMain, EventCo
        else if (cInputMain->pFAT_WR>0 ){
   
             for(int i=(tag_fat_all.size()-1); i>=0; i--)
-                             {
+							 {
             /// ---------- frs-gamma long correlations -------  //
-                 if(tag_fat_all.at(i)==1 &&    (ts_fat-ts_fat_all.at(i))>fCorrel->GFRS_Ge_LongIso_TLow)
-                                     {
+			     if(tag_fat_all.at(i)==1 &&    (ts_fat-ts_fat_all.at(i))>fCorrel->GFRS_Ge_LongIso_TLow)
+									 {
                                    dT_frsfat_long=ts_fat-ts_fat_all.at(i);
                                    
                     for(int k=0; k<cInputMain->pFatmult; k++){
@@ -1419,7 +1388,7 @@ void EventCorrelProc::Process_FRS_LongIso_Fat(EventAnlStore* cInputMain, EventCo
                                     Fat_FirstT_long=cInputMain->pFat_TDC_T[k];
                             
                                     hA_FRS_PID_FatE_LongIso->Fill(cInputMain->pFat_QDC_E[k]);
-                                    hA_FRS_FatEvsT_LongIsoGated->Fill(dT_frsfat_long/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pFat_QDC_E[k]);
+                                    hA_FRS_FatEvsT_LongIsoGated->Fill(cInputMain->pFat_QDC_E[k],dT_frsfat_long/fCorrel->GFRS_Ge_LongIso_TScale);
                             }
                         
                 ///This is for when there is more than 1 gamma in an event to get the correct time                    
@@ -1429,7 +1398,7 @@ void EventCorrelProc::Process_FRS_LongIso_Fat(EventAnlStore* cInputMain, EventCo
                                  
                          if(cInputMain->pFat_QDC_E[k]>10 && dT_frsfat_mult_long>0){
                              
-                            hA_FRS_FatEvsT_LongIsoGated->Fill(dT_frsfat_mult_long/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pFat_QDC_E[k]);
+                            hA_FRS_FatEvsT_LongIsoGated->Fill(cInputMain->pFat_QDC_E[k],dT_frsfat_mult_long/fCorrel->GFRS_Ge_LongIso_TScale);
                             
                         
                             hA_FRS_PID_FatE_LongIso->Fill(cInputMain->pFat_QDC_E[k]);
@@ -1476,11 +1445,10 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
                             Fat_mult_prompt++;
                         }
        
-       ///Cut the prompt flash with 2D poly 
-//        if(cInputMain->pEvent_Number>400000){
-//        cout<<"fCorrel->GLongIso_PID_Gate "<< fCorrel->GLongIso_PID_Gate<< " cInputMain->pFat_TDC_T[k] " <<cInputMain->pFat_TDC_T[k] << " cInputMain->pSC40[0] " <<cInputMain->pSC40[0] << " cInputMain->pFat_QDC_E[k] " <<cInputMain->pFat_QDC_E[k] << " k " << k << endl;
-//        }
+       ///Cut the prompt flash with 2D poly            
         if( cFat_EdT_cut[fCorrel->GLongIso_PID_Gate]->Test((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025,cInputMain->pFat_QDC_E[k])==true){
+ 
+           
                   
                     ///Get the 'first' gamma
                  if(k==0){
@@ -1490,7 +1458,7 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
                 if(cInputMain->pFat_QDC_E[k]>1){ 
                      ///Energy vs WR dT
                     hA_FRS_PID_FatE_LongIso->Fill(cInputMain->pFat_QDC_E[k]);
-                    hA_FRS_FatEvsT_LongIsoGated->Fill(dT_frsfat_prompt/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pFat_QDC_E[k]);
+                    hA_FRS_FatEvsT_LongIsoGated->Fill(cInputMain->pFat_QDC_E[k],dT_frsfat_prompt/fCorrel->GFRS_Ge_LongIso_TScale);
         
                     
                       }
@@ -1509,7 +1477,7 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
                 
                   if(dT_frsfat_mult_prompt!=0){ 
     
-                        hA_FRS_FatEvsT_LongIsoGated->Fill(dT_frsfat_mult_prompt/fCorrel->GFRS_Ge_LongIso_TScale,cInputMain->pFat_QDC_E[k]); 
+                        hA_FRS_FatEvsT_LongIsoGated->Fill(cInputMain->pFat_QDC_E[k],dT_frsfat_mult_prompt/fCorrel->GFRS_Ge_LongIso_TScale); 
                       
                           
                                     }
@@ -1539,145 +1507,39 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
             }
       }
     /**----------------------------------------------------------------------------------------------**/ 
-/**---------------------------------------------------------------------------**/
- /**-------------------- (FRS)-SpillOff-bPlastic-Gamma  (Beta-Delayed Gammas no AIDA)  ------**/
- /**-----------------------------------------------------------------**/
- 
-  void EventCorrelProc::Make_Beta_Gamma_bPlast_SpillOff_Histos(){
 
-      hbPlast_SpillOff_Germanium = MakeTH1('F', "Correlations/bPlast_Gamma/Germanium/Ge_Energy_bPlastBeta_SpillOff", "", 2000, 0, 2000, "Energy/keV");
-       
-      hbPlast_SpillOff_Germanium_gammagamma  = MakeTH2('D',"Correlations/bPlast_Gamma/Germanium/Ge_GamGam_bPlastBeta_SpillOff","Gamma-Gamma bPlast Beta gated spill off", fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,fCorrel->GGe1_Ge2_HistoBin,fCorrel->GGe1_Ge2_HistoMin,fCorrel->GGe1_Ge2_HistoMax,"Ge Energy1 (keV)", "Ge Energy2 (keV)");
-       
-      hbPlast_SpillOff_Fatima = MakeTH1('F', "Correlations/bPlast_Gamma/Fatima/Fat_Energy_bPlastBeta_SpillOff", "", 4000, 0, 4000, "Energy/keV");
-      
-     hbPlast_SpillOff_Fatima_gammagamma = MakeTH2('D',"Correlations/bPlast_Gamma/Fatima/Fat_GamGam_bPlastBeta_SpillOff","Gamma-Gamma Beta Spill Off gated", 2000,0,2000,2000,0,2000,"Fat Energy1 (keV)", "Fat Energy2 (keV)");
-
-      
-      //bPlast Spill On/Off  
-      for (int i =1; i<4; i++)   
-            { 
-     for(int j=0; j<bPLASTIC_CHAN_PER_DET; j++){  
-      hbPlas_ToT_SpillOff[i][j] = MakeTH1('D', Form("Correlations/bPlast_Gamma/bPlastSpillOff/ToT Plas Det SpillOff. %2d Ch. %2d",  i,j), Form("ToT Spill Off Det. %2d Ch. %2d", i,j),20000, 0., 200000.);
-      hbPlas_ToT_SpillOn[i][j] = MakeTH1('D', Form("Correlations/bPlast_Gamma/bPlastSpillOn/ToT Plas Det SpillOn. %2d Ch. %2d",  i,j), Form("ToT Spill On Det. %2d Ch. %2d", i,j),20000, 0., 200000.);
-                }          
-            }
-  }
-/**-----------------------------------------------------------------**/
-  void EventCorrelProc::Process_Beta_Gamma_bPlast_SpillOff(EventAnlStore* cInputMain, EventCorrelStore* cOutput){
-      //Declare the variables
-        bool bPlast_Beta_Fatima=false;
-        bool bPlast_Beta_Germanium=false;
-        double GeE_bPlast[Germanium_MAX_HITS];
-        double GeT_bPlast[Germanium_MAX_HITS];
-        int Ge_mult_bPlast=0;
-        for(int x=0; x<Germanium_MAX_HITS; x++){
-            
-            GeE_bPlast[x]=0;
-            GeT_bPlast[x]=0;
-        }
-
-        //Loop on bPlast
-         for(int a=1; a<3; a++){ ///Detector number
-            for (int b = 0; b <bPLASTIC_CHAN_PER_DET; b++){  ///Channel number
-                for (int c = 0; c < bPLASTIC_TAMEX_HITS; c++){ 
-                
-                //Ignore AND channels plugged in "Detector 1" (S452)
-                if((a==1&& b==15)||(a==1&& b==7)) continue;
-            
-                
-               /// Plastic On and off Spill
-            if(cInputMain-> pbPlas_ToTCalib[a][b][c]>0){
-                if(cInputMain->pOnSpill==0)hbPlas_ToT_SpillOff[a][b]->Fill(cInputMain-> pbPlas_ToTCalib[a][b][c]);
-                 if(cInputMain->pOnSpill==1)hbPlas_ToT_SpillOn[a][b]->Fill(cInputMain-> pbPlas_ToTCalib[a][b][c]);
-                
-             
-             //Beta Gate + Spill off
-                 if(cInputMain-> pbPlas_ToTCalib[a][b][c]>Beta_Gate_Low[a][b]&& cInputMain-> pbPlas_ToTCalib[a][b][c]<Beta_Gate_High[a][b]&&cInputMain->pOnSpill==0){
-                     
-                     //WR gate bPlast Fatima (gate 10.)
-                    if (((cInputMain->pbPLAS_WR-cInputMain->pFAT_WR)> fCorrel->GbPlas_Fat_TLow && (cInputMain->pbPLAS_WR-cInputMain->pFAT_WR)<fCorrel->GbPlas_Fat_THigh))bPlast_Beta_Fatima=true;
-                    
-                    //WR gate bPlast Germanium (gate 12.)
-                    if (((cInputMain->pbPLAS_WR-cInputMain->pGe_WR)> fCorrel->GbPlast_Ge_TLow && (cInputMain->pbPLAS_WR-cInputMain->pGe_WR)<fCorrel->GbPlast_Ge_THigh))bPlast_Beta_Germanium=true;
-                     
-                 }
-               }
-            }
-          }
-        }
-        // bplast beta-gated spill-off fatima 
-                 if(bPlast_Beta_Fatima==true  ){
-                    
-                     for(int k=0;k<cInputMain->pFatmult; k++){
-                hbPlast_SpillOff_Fatima->Fill(cInputMain->pFat_QDC_E[k]);
-                 
-                for(int l=0;l<cInputMain->pFatmult; l++){
-                      if(k==l) continue;
-                      hbPlast_SpillOff_Fatima_gammagamma->Fill(cInputMain->pFat_QDC_E[k],cInputMain->pFat_QDC_E[l]);
-                    //Remove second gamma if >700 and long
-//                      if(cInputMain->pFat_QDC_E[l]>700 && (cInputMain->pFat_TDC_T[k]-cInputMain->pFat_TDC_T[l])*0.025<-20&& (cInputMain->pFat_TDC_T[k]-cInputMain->pFat_TDC_T[l])*0.025>20)continue;
-//                      
-//                       if((cInputMain->pFat_TDC_T[k]-cInputMain->pFat_TDC_T[l])<10 && cInputMain->pFat_QDC_E[l]<700){
-//                        if(cInputMain->pFat_QDC_E[k]>0)  hbPlast_SpillOff_Fatima_gcut->Fill(cInputMain->pFat_QDC_E[k]);
-//                             }
-                        }
-                 }///End if bplast-Fatima
-                 
-            //Now bplast beta-gated spill-off germanium 
-            if(bPlast_Beta_Germanium==true ){
-     
-      for(int g=0; g<Germanium_MAX_DETS; g++){
-                    for(int h=0; h<Germanium_CRYSTALS; h++){
-                        if(g!=Germanium_SC41_Det&&g!=Germanium_SC41_Det_Digi&&g!=Germanium_TimeMachine_Det&&cInputMain->pGe_EAddback[g][h]>0){
-                hbPlast_SpillOff_Germanium->Fill(cInputMain->pGe_EAddback[g][h]);
-                GeE_bPlast[Ge_mult_bPlast] = cInputMain->pGe_EAddback[g][h];
-                GeT_bPlast[Ge_mult_bPlast] = cInputMain->pGe_T[g][h];
-                Ge_mult_bPlast++;
-           
-                                    }
-                                  }
-                            }
-                            
-                for(int m=0; m<Ge_mult_bPlast; m++){
-                    for(int n=0; n<Ge_mult_bPlast; n++){
-                        if(m==n) continue;
-                        
-                        //I will keep the gamma-gamma time gate off for now (in case of isomers). AKM 07.04.21)
-                       if((GeT_bPlast[m]-GeT_bPlast[n])>fCorrel->GGe1_Ge2_Low && (GeT_Long[m]-GeT_Long[n])<fCorrel->GGe1_Ge2_High){
-                        hbPlast_SpillOff_Germanium_gammagamma->Fill(GeE_bPlast[m],GeE_bPlast[n]);
-                                        
-                            
-                                           }
-//                 if(GeE_bPlast[n]>700&& (GeT_bPlast[m]-GeE_bPlast[n])<-20&& (GeT_bPlast[m]-GeE_bPlast[n])>20)continue;
-//                if(GeE_bPlast[m]>0)     hbPlast_SpillOff_Germanium_gcut->Fill(GeE_bPlast[m]);
-                                }
-                            }
-                        }
-                    }
-  }
-  
- /**---------------------------------------------------------------------------**/
- /**-------------------- (FRS)-AIDA-bPlastic-Gamma  (Beta-Delayed Gammas)  ------**/
- /**-----------------------------------------------------------------**/
+ /**----------------------------------------------------------------------------------------------**/
+ /**--------------------------------- (FRS)-AIDA-bPlastic-Germanium  (Beta-Delayed Gammas)  ------**/
+ /**----------------------------------------------------------------------------------------------**/
  void EventCorrelProc::Make_Beta_Gamma_Histos(){
      TAidaConfiguration const* conf = TAidaConfiguration::GetInstance();
      
-      hAida_Decay_deadtime = MakeTH1('I',"WR/DeadTime/Aida_decay_deadtime","Dead Time AIDA decay", 500, 0, 500,"WR dT(Aida Decay)[us]", "Counts");
-      
-     hGe_BetaGamma = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/Ge_Energy_ImplantDecay_All", "Beta-Gamma Correlated energy", 4000, 0, 2000, "Energy/keV");
+     ifstream gatefile;
+     gatefile.open("./Configuration_Files/bPlast/Beta_Gates_f107.txt");
+     int ch = 0;
+     int mm; 
+     for(mm=0;mm<32;mm++){
+	 
+	betalo[mm] = 0.0;
+	betahi[mm] = 0.0;
+	  
+     }
+     mm = 0;
+     while(gatefile.is_open() && !gatefile.eof()){
+	 
+	gatefile >> ch >> betalo[mm] >> betahi[mm];
+	mm++;
+	  
+     }
      
-     hAida_Imp_bPlas_dT=  MakeTH1('I',"WR/AIDA/Aida_Implant-bPlast_WR_dT","White Rabbit Aida Implant-bPlas",10000,-100000,100000,"WR dT(Aida Implant - bPlast)[ns]", "Counts");
+     for(mm=0;mm<32;mm++){
+       // cout << "channel " << mm << " has betalo " << betalo[mm] << " and betahi " << betahi[mm] << endl; 
+     }
      
-    
-      
-     hAida_Dec_bPlas_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-bPlast_WR_dT","White Rabbit Aida Decay-bPlast",1000,-100000,100000,"WR dT(Aida Decays-bPlast)[ns]", "Counts");
-      
-     hAida_Dec_Ge_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-Germanium_WR_dT","White Rabbit Aida Decay Germanium  [Gated on Front/Back Energy+Time, Max Decay Energy]",1000,-100000,100000,"WR dT(Aida Decays - Germanium)[ns]", "Counts");
      
-     hAida_Dec_Fatima_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-FatimaVME_WR_dT","White Rabbit Aida Decay-Fatima VME  [Gated on Front/Back Energy+Time, Max Decay Energy]",1000,-100000,100000,"WR dT(Aida Decays - Fatima)[ns]", "Counts");
+     hAIDA_DecEvLen = MakeTH1('F',"AIDA/Decays/Aida_DecEvLen","AIDA decay event length (ms)",1000,0,0.2);
+     hAIDA_DecMult = MakeTH1('F',"AIDA/Decays/Aida_DecMult","AIDA decay event multiplicity",200,0,200);
      
-     hAidaImpDecdT = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/dT(Implant-Decay)_All", " Implant Decay Time", fCorrel->GAidaImpDecT_HBin, fCorrel->GAidaImpDecT_Low, fCorrel->GAidaImpDecT_High, "Energy/keV","Imp-Dec (s)");
      
       //HELENA
      hFRS_Z_AoQ_DSSD1_stopped = MakeTH2('D',"Correlations/AIDA-FRS/FRS_Z_AoQ_DSSD1_stopped","FRS_Z_AoQ_DSSD1_stopped",1500,2,3, 1000,50,100, "AoQ", "Z");     
@@ -1700,9 +1562,17 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
       
      
      
-     
      hAida_FBdT = MakeTH1('F',"AIDA/Decays/Aida_FBdT","AIDA decay front-back time difference",8000,-32000,32000);
-     hAida_FBdE = MakeTH1('F',"AIDA/Decays/Aida_FBdE","AIDA decay front-back energy difference",400,-2000,2000);   
+     hAida_FBdE = MakeTH1('F',"AIDA/Decays/Aida_FBdE","AIDA decay front-back energy difference",400,-2000,2000);    
+     
+     hbPlast_Ge_beta_dT = MakeTH1('I',"WR/bPlast-Ge-beta-dT","White Rabbit Ge bPlast beta dT ",16000,-40000,40000);
+
+     hGe_BetaGamma = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/Ge_Energy_ImplantDecay_All", "Beta-Gamma Correlated energy", 4000, 0, 2000, "Energy/keV");
+     hGe_BetaGamma_bPlast = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/Ge_Energy_bPlastDecay_All", "Beta-Gamma Correlated energy coinc with bPlast beta", 4000, 0, 2000, "Energy/keV");
+     
+     hAIDA_Implant_Decay_ALL_dT = MakeTH1('I',"Correlations/Beta_Delayed_Gammas/AIDA_Imp_Dec_All_dT","Time difference between all decays and the last recorded implant", 1000,0,10);
+
+     hAIDA_Implant_Decay_ALL_dT_short = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_Imp_Dec_All_dT_short","Time difference between all decays and the last recorded implant", 1000,0,0.1);
      
      hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1 = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_Implant_Decay_ALL_dT_shockgate_DSSD1","AIDA_Implant_Decay_ALL_dT_shockgate_DSSD1",1000,0,0.1);
      hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2 = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_Implant_Decay_ALL_dT_shockgate_DSSD2","AIDA_Implant_Decay_ALL_dT_shockgate_DSSD2",1000,0,0.1);
@@ -1712,6 +1582,26 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
      hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg","AIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg",1000,0,0.1);
      hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg","AIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg",1000,0,0.1);     
 
+     
+     hAIDA_SC41_Decay_ALL_dT_short = MakeTH1('F',"Correlations/Beta_Delayed_Gammas/AIDA_SC41_Dec_All_dT_short","Time difference between all decays and the last recorded SC41", 1000,0,1000);     
+     
+     
+     hAida_Imp_bPlas_dT=  MakeTH1('I',"WR/AIDA/Aida_Implant-bPlast_WR_dT","White Rabbit Aida Implant-bPlas",10000,-100000,100000,"WR dT(Aida Implant - bPlast)[ns]", "Counts");
+      
+     hAida_Dec_bPlas_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-bPlast_WR_dT","White Rabbit Aida Decay-bPlast",1000,-100000,100000,"WR dT(Aida Decays-bPlast)[ns]", "Counts");
+     hAida_Dec_bPlas_ToTgate_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-bPlast_ToTgate_WR_dT","White Rabbit Aida Decay-bPlast with bPlast ToT gate",1000,-100000,100000,"WR dT(Aida Decays-bPlast)[ns]", "Counts");
+
+     
+     hAida_Dec_bPlas_Correl_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-bPlast_Correlated_WR_dT","White Rabbit Aida Decay-bPlast for Correlated decays",1000,-100000,100000,"WR dT(Aida Decays-bPlast)[ns]", "Counts");
+          
+      
+     hAida_Dec_Ge_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-Germanium_WR_dT","White Rabbit Aida Decay Germanium",1000,-100000,100000,"WR dT(Aida Decays - Germanium)[ns]", "Counts");
+     
+     hAida_Dec_Fatima_dT=  MakeTH1('I',"WR/AIDA/Aida_Decay-FatimaVME_WR_dT","White Rabbit Aida Decay-Fatima VME",1000,-100000,100000,"WR dT(Aida Decays - Fatima)[ns]", "Counts");
+     
+//     hAidaImpDecdT = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/dT(Implant-Decay)_All", " Implant Decay Time", fCorrel->GAidaImpDecT_HBin, fCorrel->GAidaImpDecT_Low, fCorrel->GAidaImpDecT_High, "Energy/keV","Imp-Dec (s)");
+        hAidaImpDecdT = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Germanium/dT(Implant-Decay)_All", "Implant Decay Time",1000,0,10);     
+     
      //Helena
      hAIDA_Shock_DSSD1_10ms = MakeTH1('F',"AIDA/Decays/AIDA_Shock_DSSD1_10ms","Strip separation (X) between implant and decay events within 10ms of implantation DSSD1",300,-150,150);
      hAIDA_Shock_DSSD2_10ms = MakeTH1('F',"AIDA/Decays/AIDA_Shock_DSSD2_10ms","Strip separation (X) between implant and decay events within 10ms of implantation DSSD2",300,-150,150);
@@ -1728,34 +1618,79 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
      hAIDA_Shock_DSSD1_after100us = MakeTH1('F',"AIDA/Decays/AIDA_Shock_DSSD1_after100us","Strip separation (X) between implant and decay events after 100us of implantation DSSD1",300,-150,150);
      hAIDA_Shock_DSSD2_after100us = MakeTH1('F',"AIDA/Decays/AIDA_Shock_DSSD2_after100us","Strip separation (X) between implant and decay events after 100us of implantation DSSD2",300,-150,150);
      hAIDA_Shock_DSSD3_after100us = MakeTH1('F',"AIDA/Decays/AIDA_Shock_DSSD3_after100us","Strip separation (X) between implant and decay events after 100us of implantation DSSD3",300,-150,150);        
+     hAida_ClusterSizeX_FrontE =MakeTH2('D',Form("AIDA/Decays/ClusteSize_FrontE"),Form("Cluster_Size_vs_FrontE"), 25, 0, 25, 400,0,4000,"FrontE", "Cluster Size");
      
-     
+     for(int i=0;i<3;i++){
+        hAIDA_decays_e_good[i] = MakeTH1('F',Form("AIDA/Decays/DSSD%d_decays_energy_good",i+1),Form("DSSD %d decay energy for 'good' decays",i+1),1000,0,20000,"Decay Energy/keV");
+     }
+	
+     for(int i=1;i<4;i++){
+        for(int j=0;j<bPLASTIC_CHAN_PER_DET;j++){
+           hbPlas_ToT_DecayGated[i][j] = MakeTH1('D', Form("bPlastic/ToT/ToT Plas Det. %2d Ch. %2d Decay Gated",  i,j), Form("ToT Det. %2d Ch. %2d FRS Gated", i,j),20000, 0., 200000.);
+           
+           //hbPlas_ToT_CutfileGated[i][j] = MakeTH1('D', Form("bPlastic/ToT/ToT Plas Det. %2d Ch. %2d Cutfile Gated",  i,j), Form("ToT Det. %2d Ch. %2d Cutfile Gated", i,j),20000, 0., 200000.);
+         }
+     }
      if(fCorrel->GSetup_corr_Beta_Gamma_Gamma==true){
 //       hGe_BetaGamma_GeE1_GatedTrans = MakeTH1('I',"Correlations/Beta_Delayed_Gammas/Germanium/Energy/Gamma-Gamma/GeE1_GatedTrans","Fatima 95Pd BDG 382,716,1351 gated",4000,0,2000,"Energy (keV)", "Counts");
      }
-      
+     
+     hAIDA_EvsdT_all = MakeTH2('F', Form("Correlations/Beta_Delayed_Gammas/EdT/EnergyvsdT_all"), Form("EnergyvsdT_all"),1000,0,50, 400,0,4000,"Time (s)","Energy/keV");
+      hAIDA_EvsdT_all_OFF = MakeTH2('F', Form("Correlations/Beta_Delayed_Gammas/EdT/EnergyvsdT_all_OFF"), Form("EnergyvsdT_all_OFF"),1000,0,50, 400,0,4000,"Time (s)","Energy/keV");
+      hAIDA_EvsdT_all_ON = MakeTH2('F', Form("Correlations/Beta_Delayed_Gammas/EdT/EnergyvsdT_all_ON"), Form("EnergyvsdT_all_SpillON"),1000,0,50, 400,0,4000,"Time (s)","Energy/keV");
+     
+      char name[50];
      for(int i =0; i<MAX_FRS_GATE; i++){
-         hDecPIDGated[i]= MakeTH1('F', Form("Correlations/Beta_Delayed_Gammas/DecayEnergy_ImpDecayGated/DecayEnergy_ImpDecayGated_PIDGate%d", i), Form("Aida Decay gated PID+dT %d", i), 1000, 0, 20000, "Energy/keV");
-         
+     
+     hAIDA_EvsdT[i] = MakeTH2('F', Form("Correlations/Beta_Delayed_Gammas/EdT/EnergyvsdT/EnergyvsdT_PIDGate%d", i), Form("EnergyvsdT PID %d", i),1000,0,50, 400,0,4000,"Time (s)","Energy/keV");
+     
+     
      hGe_BetaGamma_E[i] = MakeTH1('F', Form("Correlations/Beta_Delayed_Gammas/Germanium/Energy/Ge_BetaGam_Energy_PIDGate%d", i), Form("Germanium Energy Aida Beta-Gamma PID %d", i), 2000, 0, 2000, "Energy/keV");
      
      if(fCorrel->GSetup_corr_Beta_Gamma_Gamma==true){
-     hGe_BetaGamma_GeE1_GeE2[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Germanium/Energy/Gamma-Gamma/Ge1Ge2_BetaGam_PIDGate%d",i),Form("Germanium Gamma-Gamma Imp-Dec, PID Gate: %d",i), 2000, 0, 2000, 2000,0,2000,"Ge Energy1 (keV)", "Ge Energy2 (keV)");
+     hGe_BetaGamma_GeE1_GeE2[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Germanium/Energy/Gamma-Gamma/Ge1Ge2_BetaGam_PIDGate%d",i),Form("Germanium Gamma-Gamma Imp-Dec, PID Gate: %d",i), 4000, 0, 2000, 4000,0,2000,"Ge Energy1 (keV)", "Ge Energy2 (keV)");
      }
      
      hGe_BetaGamma_dT[i] = MakeTH1('F', Form("Correlations/Beta_Delayed_Gammas/Germanium/dT(Implant-Decay)/Implant-DecaydT_PIDGate%d", i), Form("dT Aida Implant-Decay Beta-Gamma PID %d", i), fCorrel->GAidaImpDecT_HBin,fCorrel->GAidaImpDecT_Low,fCorrel->GAidaImpDecT_High, "Implant-Decay dT (s)");
       
-     hGe_BetaGamma_EdT[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Germanium/EnergyvsdT(Implant-Decay)/Ge_BetaGam_EnergyvsdT_Gate%d",i),Form("dT Aida Implant-Decay vs Germanium Energy PID Gate %d",i), 2000, 0, 2000, fCorrel->GAidaImpDecT_HBin,fCorrel->GAidaImpDecT_Low,fCorrel->GAidaImpDecT_High,"Ge Energy (keV)", "Implant-Decay dT (s)");
-
+     hGe_BetaGamma_EdT[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Germanium/EnergyvsdT(Implant-Decay)/Ge_BetaGam_EnergyvsdT_Gate%d",i),Form("dT Aida Implant-Decay vs Germanium Energy PID Gate %d",i), 4000, 0, 2000, fCorrel->GAidaImpDecT_HBin,fCorrel->GAidaImpDecT_Low,fCorrel->GAidaImpDecT_High,"Ge Energy (keV)", "Implant-Decay dT (s)");
+     
+     
+    
      }
-
-     ///Fatima BDG AIDA
+     ///2D Gates
+//      Float_t init_ID_Z_AoQ_corrstep_BDG[8][8][2];
+//       for(int m=0; m<8; m++){
+//           for(int n=0; n<8; n++){
+//            
+//            
+//            init_ID_Z_AoQ_corrstep_BDG[m][n][0] =C_X_ZAoQ[m][n];
+//            init_ID_Z_AoQ_corrstep_BDG[m][n][1] =C_Y_ZAoQ[m][n];
+//       
+//       }
+//     }
+    
+    // char name[50];
+//      for(int i =0; i<8; i++){
+//       sprintf(name,"cID_Z_AoQ_corrstep_BDG%d",i);
+//       cID_Z_AoQ_corrstep_BDG[i] = MakePolyCond("FRS_ID_Gated_CorrStep_BDG", name, 8, init_ID_Z_AoQ_corrstep_BDG[i], "ZvsAoQ_BDG");
+//      }
+     ///Fatima
      if(fCorrel->GSetup_corr_Beta_Gamma_Fatima==true){
 
+        
+         hFat_BetaGamma_bPlast = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Fatima/Energy/Fat_BetaGam_Energy_bPlast", "Fatima Energy Beta-Gamma gated on bPlast", 2000, 0, 2000, "Energy/keV");
+         
+
+         hFat_BetaGamma = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Fatima/Energy/Fat_BetaGam_Energy", "Fatima Energy Beta-Gamma", 2000, 0, 2000, "Energy/keV");       
+	 hFAT_OffSpill = MakeTH1('F', "Correlations/Beta_Delayed_Gammas/Fatima/Energy/Fat_OffSpill_All", "Fatima Energy Off-Spill" ,2000, 0, 2000, "Energy/keV"); 
+         
          for(int i=0; i<MAX_FRS_GATE; i++){
+	 
+	 
           hFat_BetaGamma_E[i] = MakeTH1('F', Form("Correlations/Beta_Delayed_Gammas/Fatima/Energy/Fat_BetaGam_Energy_PIDGated%d", i), Form("Fatima Energy Beta-Gamma PID %d", i), 2000, 0, 2000, "Energy/keV");
           
-          hFat_BetaGamma_E1_E2[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Fatima/Gamma-Gamma/FatE1FatE2_BetaGam_PIDGate%d",i),Form("Fatima Gamma-Gamma Beta Corr Gate: %d",i), 500, 0, 2000, 500,0,2000,"Fatima Energy1 (keV)", "Fatima Energy2 (keV)");
+          hFat_BetaGamma_E1_E2[i] = MakeTH2('D',Form("Correlations/Beta_Delayed_Gammas/Fatima/Gamma-Gamma/FatE1FatE2_BetaGam_PIDGate%d",i),Form("Fatima Gamma-Gamma Beta Corr Gate: %d",i), 2000, 0, 2000, 2000,0,2000,"Fatima Energy1 (keV)", "Fatima Energy2 (keV)");
          }
      
         if(fCorrel->GSetup_corr_Beta_Gamma_Fatima_LT==true){
@@ -1779,13 +1714,16 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
           }
      }
 }
- /**------------------------------------(FRS)-AIDA-bPlastic  (Beta Delayed Gammas)----------------------------**/
+ /**------------------------------------(FRS)-AIDA-bPlastic  (Beta Decay)----------------------------**/
  ///This is an adpated version of the tree reader to look for Beta-gamma correlations by HMA/NH
  void EventCorrelProc::Process_Beta_Gamma(EventAnlStore* cInputMain, EventCorrelStore* cOutput){    
      
  
      TAidaConfiguration const* conf = TAidaConfiguration::GetInstance();
-      
+     
+        //*********************************************************************
+        // DECLARATIONS
+     
         Long64_t AIDA_dT_imp_decay;
         Long64_t AIDA_dT_imp_decay_FRS_gated = 0;
         Long64_t AIDA_dT_decay_bPlast = 0;
@@ -1795,42 +1733,745 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
         int ImpIterator =0, DecayIterator=0;
         double lastdT = 1E15;
         int numImpIonsAIDA=0;
+        int numImpIonsAIDA_all = 0;
         int AidaDecMult=0;
         int64_t minTime = 0;
-        int strx = 0;
-        int stry = 0;
+        double strx = 0;
+        double stry = 0;
         int64_t dT = 0;
         Int_t GateTemp=100;
+        Int_t DSSD_corr = 0;
         Int_t goodhit = 0;
-        int64_t dT_Gate[8];
-        double lastdT_Gate[8]; ///I had to declare this a double to avoid a crash (was int64_t)
-        Int_t DSSD_Gate[8];
-        Int_t strx_Gate[8];
-        Int_t stry_Gate[8];
-        int64_t DecTime_Gate[8];
+        int64_t dT_Gate[MAX_FRS_GATE];
+        double lastdT_Gate[MAX_FRS_GATE]; ///I had to declare this a double to avoid a crash (was int64_t)
+        Int_t DSSD_Gate[MAX_FRS_GATE];
+        double strx_Gate[MAX_FRS_GATE];
+        double stry_Gate[MAX_FRS_GATE];
+        int64_t DecTime_Gate[MAX_FRS_GATE];
         Int_t B = 1;
         int64_t DecTime = 0;
-     ///   double testbg[100];
         int galhits=0;
         double GeE[Germanium_MAX_HITS];
+	    int bPlast1_mult = 0;
+	    int bPlast2_mult = 0;
+        int bPlast1_betaev = 0;
+        int bPlast2_betaev = 0;
+        int corrbPlast = 0;
+        int corrHPGe = 0;
+        int corrFAT = 0;    
+        int corrTOT = 0;
+        int corrbPlast_noWR = 0;
+        int corrHPGe_noWR = 0;
+        int corrFAT_noWR = 0;      
+        int corrTOT_noWR = 0;
         
+        int bPlastDetMult = 0;
+        Long64_t lastDectime = 0;
+
+        
+	//*****************************************************************
+	// Initialisations
+	
+	
         for(int x=0; x<Germanium_MAX_HITS; x++)GeE[x]=0;
-        
-  /// for(int i=0;i<100; i++)testbg[i]=0;
-        
         for(int i=0; i<MAX_FRS_GATE; i++)lastdT_Gate[i]=0;
-         //for(int i=0; i<32; i++)  cInputMain-> pbPlas_ToTCalib[i]=100;
+	
+	
+	//*****************************************************************
+    // Start with the bPlast.....
+	// Helena
+    //cout << "Test new: OnSpill flag: " << cInputMain->pOnSpill << endl;
+
+	
+	if(cInputMain->pbPLAS_WR >0){ // Check bPlast fires
+	  
+  
+	for(int i=1; i<4; i++){
+	  for(int j=0; j<16; j++){
+	    for(int k=0; k<10; k++){
+	
+	      if(i==1){ //Downstream detector
+		     if(cInputMain->pbPlas_ToTCalib[i][j][k]> betalo[j]){
+		       bPlast1_mult++;	
+       		       if((cInputMain->pbPlas_ToTCalib[i][j][k]< betahi[j])) bPlast1_betaev++;
+		     }
+          
+	      }
+	      if(i==2){
+		     if(cInputMain->pbPlas_ToTCalib[i][j][k]> betalo[j+16]){
+		       bPlast2_mult++;
+       		       if((cInputMain->pbPlas_ToTCalib[i][j][k]< betahi[j+16])) bPlast2_betaev++;
+		     }
+	      }
+	      
+
+	      
+      
+	      
+	      //cout << "i: " << i << ", j: " << j << ", k: " << k << ": " << cInputMain-> pbPlas_ToTCalib[i][j][k] << endl;
+	      
+	      
+	    }
+	  }
+	}
+	
+	if(bPlast1_mult>3) bPlastDetMult++;
+        if(bPlast2_mult>3) bPlastDetMult++;
+	
+
+	//cout << "bPlast1_mult: " << bPlast1_mult << endl;
+	//cout << "bPlast2_mult: " << bPlast2_mult << endl;
+	//cout << "**********************************" << endl;
+	
+	}
+	
+	
+	
+	//*****************************************************************
+    // AIDA
+	// Next look at AIDA implants
+
+    
+    AidaHit firstDec;
+    AidaHit BestImp;
+    AidaHit CorrDec;
+    AidaHit imphit;
+    Long64_t deltaT = 0;
+    
+    //----------------------------------------------------------
+    // Beginning of AIDA loop
+    for (auto& cInputRef : cInputMain->pAida){
+        
+       auto* cInput = &cInputRef;
+       std::vector<AidaHit> imphits = cInput->Implants;
+       //********************************************************************     
+       
+       for(auto& i : imphits){
+          imphit = i;
+          hAida_Imp_bPlas_dT->Fill(imphit.Time- cInputMain->pbPLAS_WR);
+          int ImpstripX = imphit.StripX;
+          int ImpstripY = imphit.StripY;  
+          int ImpDSSD = imphit.DSSD-1;
+          numImpIonsAIDA_all++;
+	  
+	  
+	  if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+          if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+          if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+	  
+	  if(imphit.DSSD==1) hAIDA_EvsZ_DSSD1->Fill(cInputMain->pFRS_z,jPID.Energy);
+	       if(imphit.DSSD==2) hAIDA_EvsZ_DSSD2->Fill(cInputMain->pFRS_z,jPID.Energy);
+	       if(imphit.DSSD==3) hAIDA_EvsZ_DSSD3->Fill(cInputMain->pFRS_z,jPID.Energy);
+          
+          if(imphit.DSSD<=3 && imphit.Stopped){ 
+                jPID.Event = imphit.Event;
+                jPID.DSSD = imphit.DSSD;
+                jPID.StripX = imphit.StripX;
+                jPID.StripY = imphit.StripY;
+                jPID.PosX = imphit.PosX;
+                jPID.PosY = imphit.PosY;
+                jPID.Energy = imphit.Energy;
+                jPID.EnergyFront = imphit.EnergyFront;
+                jPID.EnergyBack = imphit.EnergyBack;
+                jPID.StripXMin = imphit.StripXMin;
+                jPID.StripXMax = imphit.StripXMax;
+                jPID.StripYMin = imphit.StripYMin;
+                jPID.StripYMax = imphit.StripYMax;
+                jPID.ClusterSizeX = imphit.ClusterSizeX;
+                jPID.ClusterSizeY = imphit.ClusterSizeY;
+                jPID.Time = imphit.Time;
+                jPID.TimeFront = imphit.TimeFront;
+                jPID.TimeBack = imphit.TimeBack;
+                jPID.FastTime = imphit.FastTime;
+                jPID.FastTimeFront = imphit.FastTimeFront;
+                jPID.FastTimeBack = imphit.FastTimeBack;
+                jPID.Stopped = imphit.Stopped;
+                
+		
+		
+		if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+                if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+                if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+
+		if(cInputMain->pFRS_dEdeg_Z1_pass){
+		if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+                if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+                if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
+		}
+		
+
+                jPID.GatePass = 100;
+              
+                for(int gate=0;gate<MAX_FRS_GATE;gate++){
+                    if(cInputMain->pFRS_ZAoQ_pass[gate]==true ){ 
+                        jPID.GatePass = gate;
+                    }
+                } 
+                
+                numImpIonsAIDA++;
+                BestImp = imphit;                
+                if(jPID.GatePass<100){
+                //if(false){    
+                //if(true){    
+                    implantMap.emplace(jPID.Time,jPID);
+                    /*cout << endl << "********************************************" << endl;
+                    cout << "Printing AIDA IMPLANT EVENT!" << endl;
+                    cout << "Event number: " << event_number << endl;
+                    cout << "Imp.DSSD: " << BestImp.DSSD << endl;
+                    cout << "Pixel (" << BestImp.StripX << "," << BestImp.StripY << ")" << endl;
+                    cout << "GatePass: " << jPID.GatePass << endl;
+                    cout << "Imp.Time: " << BestImp.Time << endl;
+                    cout << "Imp.Energy: " << BestImp.EnergyFront << endl;     
+                    cout << "t_lastSC41: " << cInputMain->pt_lastSC41 << endl;
+		    cout << "t_lastIMP_DSSD1: " << cInputMain->pt_lastIMP_DSSD1 << endl;
+		    cout << "t_lastIMP_DSSD2: " << cInputMain->pt_lastIMP_DSSD2 << endl;
+		    cout << "t_lastIMP_DSSD3: " << cInputMain->pt_lastIMP_DSSD3 << endl;
+		    */
+                }
+
+        }
+        
+        
+
+       
          
-//         ///Get Plastic fired
-//     for(int a=1; a<3; a++){ ///Detector number
-//         for (int b = 0; b < 16; b++){  ///Channel number
-//             for (int c = 0; c < cInputMain->pbPlas_PMT_Lead_N[a][b]; c++){ 
-//        if (cInputMain-> pbPlas_ToTCalib[2][b][c]>0) bPlas_punchthrough=true;
-//        if (cInputMain-> pbPlas_ToTCalib[a][b][c]>fCorrel->GbPlast_Egate_low && cInputMain-> pbPlas_ToTCalib[a][b][c]<fCorrel->GbPlast_Egate_high) bPlas_fired=true;
-//                         }
-//                  }
-//              }
-        ///AIDA
+ 
+     
+     }
+    ///End of implants	
+    //******************************************************************
+	
+
+	
+	
+	//******************************************************************
+	// Start the decays...
+
+	std::vector<AidaHit> dechits = cInput->Decays;
+    
+    for (auto& j : dechits){
+        
+        hAIDA_DecMult->Fill(dechits.size());
+        
+        
+        
+        if(dechits.size()<500){
+        
+        
+        
+              if(false){
+              //if(true){
+            //if((event_number > 94500)&&(event_number < 94510)){
+              cout << endl << "*************************************************" << endl;
+              cout << "Printing out some AIDA decay events" << endl;
+              cout << "AIDAHIT size-> " << dechits.size() << endl;
+              cout << "EVENT NUMBER " << event_number << endl;
+              cout << "j.Event: " << j.Event << endl;
+              cout << "j.Time: " << j.Time << endl;
+              cout << "j.DSSD: " << j.DSSD << endl;
+              cout << "j.StripX: " << j.StripX << endl;
+              cout << "j.StripY: " << j.StripY << endl;
+              cout << "j.ClusterSizeX: " << j.ClusterSizeX << endl;
+              cout << "j.ClusterSizeY: " << j.ClusterSizeY << endl;
+              cout << "j.TimeFront - j.TimeBack: " << (j.TimeFront - j.TimeBack) << endl;
+              cout << "corrbPlast: " << corrbPlast << endl;
+              cout << "corrHPGe: " << corrHPGe << endl;
+              cout << "corrFAT: " << corrFAT << endl;
+              
+
+              
+              }        
+        
+        
+       AidaHit dechit = j;           
+       
+       if(AidaDecMult == 0){
+           
+          firstDec = dechit;/// Take the first decay in the stitched event as a reference time.
+          /// Remove all implants from map that came >Xs ago (defined in Correlations.dat)
+          minTime = j.Time - 60e9;
+          auto itLow = implantMap.lower_bound(minTime);
+          if (itLow != implantMap.end()){
+             if(itLow == implantMap.begin()){}
+             else if(std::prev(itLow) == implantMap.begin()){
+                  implantMap.erase(implantMap.begin());
+             }
+             else{
+                  implantMap.erase(implantMap.begin(),std::prev(itLow));
+                  //Erase all entries out of correlation window
+             }
+          }          
+      }
+      AidaDecMult++;
+
+      //Now decide on decay conditions:
+      // 1. Front-Back time
+      // 2. Front-Back energy
+      // 3. Cluster size
+      // 4. WR time between either FATIMA, GAL or bPlast
+      // 5. Veto on SC41 events
+      // 6. Decay energy conditions
+      // 7. No two strips without neighbour
+      // 8. Event multiplicity
+      
+      hAida_FBdT->Fill(dechit.TimeFront - dechit.TimeBack);
+      hAida_FBdE->Fill(dechit.EnergyFront-dechit.EnergyBack);
+      
+      
+
+      if(dechit.DSSD == 1) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1;
+      if(dechit.DSSD == 2) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2;
+      if(dechit.DSSD == 3) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3;
+      
+       hAida_ClusterSizeX_FrontE->Fill(dechit.ClusterSizeX,dechit.EnergyFront);
+          
+        
+      if(dechits.size()<5)
+      //if((bPlast2_betaev > 8))  
+         
+      //if((double(deltaT)/1e3)>400)
+      //if((double(dechit.Time - cInputMain->pt_lastSC41)/1e3)>400) 
+      //if(bPlastDetMult<2) 
+      if((dechit.TimeFront - dechit.TimeBack)<fCorrel->GAidaFB_dT && (dechit.TimeFront - dechit.TimeBack)>-fCorrel->GAidaFB_dT)
+      if((dechit.EnergyFront-dechit.EnergyBack)<fCorrel->GAidaFB_dE && (dechit.EnergyFront - dechit.EnergyBack)>-fCorrel->GAidaFB_dE)
+      {
+      
+     
+          if(cInputMain->pbPLAS_WR>0) corrbPlast_noWR = 1;
+          if(cInputMain->pGe_WR>0) corrHPGe_noWR = 1;
+          if(cInputMain->pFAT_WR>0) corrFAT_noWR = 1;
+          corrTOT_noWR = corrbPlast_noWR + corrHPGe_noWR + corrFAT_noWR;
+              
+          if((dechit.Time-cInputMain->pbPLAS_WR)>fCorrel->GAIDA_bPlas_TLow && (dechit.Time-cInputMain->pbPLAS_WR)<fCorrel->GAIDA_bPlas_THigh)
+              corrbPlast = 1;
+          
+          if((dechit.Time-cInputMain->pGe_WR)>fCorrel->GAida_Ge_WRdT_Low && (dechit.Time-cInputMain->pGe_WR)<fCorrel->GAida_Ge_WRdT_High)
+              corrHPGe = 1;
+          
+          if((dechit.Time-cInputMain->pFAT_WR)>fCorrel->GAida_Fat_WRdT_Low && (dechit.Time-cInputMain->pFAT_WR)<fCorrel->GAida_Fat_WRdT_High)
+              corrFAT = 1;
+          
+          corrTOT = corrbPlast + corrHPGe + corrFAT;
+        
+        //if(corrTOT_noWR>1){
+	if(true){  
+          if(cInputMain->pGe_WR!=0) hAida_Dec_Ge_dT->Fill(dechit.Time-cInputMain->pGe_WR);
+          if(cInputMain->pFAT_WR!=0) hAida_Dec_Fatima_dT->Fill(dechit.Time-cInputMain->pFAT_WR);
+          if(cInputMain->pbPLAS_WR!=0 ){
+	    hAida_Dec_bPlas_dT->Fill(dechit.Time-cInputMain->pbPLAS_WR);  
+	    if((bPlast1_betaev > 5) || (bPlast2_betaev > 5)){
+	      hAida_Dec_bPlas_ToTgate_dT->Fill(dechit.Time-cInputMain->pbPLAS_WR); 
+	      if((dechit.Time-cInputMain->pbPLAS_WR) > 13000 && (dechit.Time-cInputMain->pbPLAS_WR)<20000)hAIDA_decays_e_good[dechit.DSSD-1]->Fill(dechit.EnergyFront);
+	    }
+	  }
+          hAIDA_Implant_Decay_ALL_dT->Fill(double(deltaT)/1e9);
+          hAIDA_Implant_Decay_ALL_dT_short->Fill(double(deltaT)/1e9);
+          hAIDA_SC41_Decay_ALL_dT_short->Fill(double(dechit.Time - cInputMain->pt_lastSC41)/1e3);
+          
+	  
+          
+	  // DSSD 1
+	  if(dechit.DSSD==1){
+	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e6 < 10){
+	       hAIDA_Shock_DSSD1_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);
+	    }
+	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e3 < 100){
+	       hAIDA_Shock_DSSD1_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);   
+	    }
+	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e6 > 10){
+	       hAIDA_Shock_DSSD1_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);
+	    }
+	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e3 > 100){
+	       hAIDA_Shock_DSSD1_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);   
+	    }	    
+	    
+          if((dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)>-3){
+           hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1->Fill(double(deltaT)/1e9);
+          }
+          if((dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)>-36){
+           hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1_bg->Fill(double(deltaT)/1e9);
+          }          
+          
+          }
+          
+          // DSSD 2
+	  if(dechit.DSSD==2){
+    	 if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e6 < 10){
+	           hAIDA_Shock_DSSD2_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);
+	 }
+    	 if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e3 < 100){
+	           hAIDA_Shock_DSSD2_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);		   
+         } 
+    	 if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e6 > 10){
+	           hAIDA_Shock_DSSD2_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);
+	 }
+    	 if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e3 > 100){
+	           hAIDA_Shock_DSSD2_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);		   
+         }          
+         
+        if((dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)>-3){
+               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2->Fill(double(deltaT)/1e9);
+         }
+        if((dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)>-36){
+               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg->Fill(double(deltaT)/1e9);
+         }         
+      }
+      // DSSD 3
+      
+	  if(dechit.DSSD==3){  
+       	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e6 < 10){
+               hAIDA_Shock_DSSD3_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
+            }
+       	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e3 < 100){
+               hAIDA_Shock_DSSD3_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
+            }  
+       	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e6 > 10){
+               hAIDA_Shock_DSSD3_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
+            }
+       	    if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e3 > 100){
+               hAIDA_Shock_DSSD3_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
+            }             
+            
+        if((dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)>-3){
+               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3->Fill(double(deltaT)/1e9);
+            }
+         if((dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)>-36){
+               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg->Fill(double(deltaT)/1e9);
+            }           
+            
+        }
+	 
+        }
+
+          
+          //if(true){
+
+          if(corrbPlast == 1 || corrHPGe == 1 || corrFAT == 1){
+          //if(corrTOT==3){    
+          //if((corrbPlast_noWR==1)||(corrHPGe_noWR==1)||(corrFAT_noWR)){
+              
+              //if(event_number > 1000 && event_number < 2000){
+              if(false){
+              //if(true){    
+              cout << endl << "*************************************************" << endl;
+              cout << "Printing out some AIDA decay events" << endl;
+              cout << "EVENT NUMBER " << event_number << endl;
+              cout << "j.Event: " << j.Event << endl;
+              cout << "j.Time: " << j.Time << endl;
+              cout << "j.DSSD: " << j.DSSD << endl;
+              cout << "j.StripX: " << j.StripX << endl;
+              cout << "j.StripY: " << j.StripY << endl;
+              cout << "j.ClusterSizeX: " << j.ClusterSizeX << endl;
+              cout << "j.ClusterSizeY: " << j.ClusterSizeY << endl;
+              cout << "j.TimeFront - j.TimeBack: " << (j.TimeFront - j.TimeBack) << endl;
+              cout << "corrbPlast: " << corrbPlast << endl;
+              cout << "corrHPGe: " << corrHPGe << endl;
+              cout << "corrFAT: " << corrFAT << endl;
+              
+
+              
+              }
+          }
+          
+          
+          //*********************************************************************************
+          // Now I have a decay candidate, try to correlate to a previous implant!
+          
+          //if(corrTOT_noWR>1){
+          //if(true){
+          //if((dechit.Time-cInputMain->pbPLAS_WR)>13000 && (dechit.Time-cInputMain->pbPLAS_WR)<20000)
+          //if((bPlast1_betaev > 5) || (bPlast2_betaev > 5)){  
+          //if(dechit.EnergyFront>400)
+          if(corrTOT>0){    
+          dT = 1E15;
+          lastdT = 1E15;
+          strx = 0;
+          stry = 0; 
+          DecTime = 0;
+          GateTemp = 100; 
+          goodhit = 1;       
+          DSSD_corr = 0;
+          for(int i=0;i<MAX_FRS_GATE;i++){
+             dT_Gate[i] = 1E15;
+             lastdT_Gate[i] = 1E15;
+             DSSD_Gate[i] = 0;
+             strx_Gate[i] = 0;
+             stry_Gate[i] = 0;
+             DecTime_Gate[i] = 0;
+          }
+          
+          // Loop over implant map and look for correlations
+          for(auto impIt = implantMap.begin(); impIt != implantMap.end(); impIt++){
+               
+             if(impIt->second.DSSD == dechit.DSSD ){ 
+            
+              if(dechit.StripXMax >= (impIt->second.StripXMin-B) && dechit.StripXMin <= impIt->second.StripXMax+B){
+              if(dechit.StripYMax >= (impIt->second.StripYMin-B) && dechit.StripYMin <= impIt->second.StripYMax+B){
+                                 
+               
+                  dT = (dechit.Time) - impIt->second.Time;
+                  GateTemp = impIt->second.GatePass;
+            
+                  if(dT < lastdT){
+                      lastdT = dT;
+                      DecTime = dechit.Time;
+                      strx = dechit.StripX;
+                      stry = dechit.StripY;
+                      CorrDec = dechit;
+                      
+                      
+                  }
+               
+                  dT_Gate[GateTemp] = (dechit.Time) - impIt->second.Time;
+                    
+                  if(dT_Gate[GateTemp] < lastdT_Gate[GateTemp]){
+                      lastdT_Gate[GateTemp] = dT_Gate[GateTemp];
+                    
+                      DecTime_Gate[GateTemp] = dechit.Time;
+                      strx_Gate[GateTemp] = dechit.StripX;
+                      stry_Gate[GateTemp] = dechit.StripY; 
+                  }      
+                  
+                
+               }
+               }
+             }    
+          } /// Searching the implant multimap         
+          } // Checking for other subsytem correlations
+          
+          
+          //*********************************************************************************
+
+          
+          
+          
+      }// Decay conditions loop
+          
+    }// checking AIDA subevent multiplicity     
+    
+    
+    lastDectime = j.Time;
+    }// DECAY loop
+    
+    
+ }// end of AIDA loop
+ 
+hAIDA_DecEvLen->Fill(double(lastDectime - firstDec.Time)/1E6); 
+ 
+//if(goodhit==1) cout << "NEW TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+
+
+if(goodhit==1)
+           for(int mm=1; mm<4;mm++){
+             for(int nn=0;nn<16;nn++){
+                if(cInputMain->pbPlas_ToTCalib[mm][nn][0]>0)hbPlas_ToT_DecayGated[mm][nn]->Fill(cInputMain->pbPlas_ToTCalib[mm][nn][0]);   
+             }
+          }
+ 
+if(AidaDecMult>0 && first_timestamp == 0) first_timestamp = firstDec.Time;
+if(firstDec.Time>0) last_timestamp = firstDec.Time;
+           
+if(cInputMain->pOnSpill==0)
+if((cInputMain->pbPLAS_WR -cInputMain->pFAT_WR)>-300 && (cInputMain->pbPLAS_WR -cInputMain->pFAT_WR)<-200){
+   for(int k=0; k<cInputMain->pFatmult; k++){
+      hFAT_OffSpill->Fill(cInputMain->pFat_QDC_E[k]); 
+   }
+   
+   //if(event_number<2000) cout << "test filling... " << endl;
+}
+
+
+
+ //*********************************************    
+ // Printout out correlated decay candidates:
+ if(goodhit==1 && double(lastdT)/1e9 < 30){
+ 
+ 
+ 
+ for(int i=0;i<MAX_FRS_GATE;i++){
+ 
+ 	if(double(lastdT_Gate[i])/1e9<30){
+	  hAIDA_EvsdT[i]->Fill(double(lastdT_Gate[i])/1e9,CorrDec.EnergyFront);
+	  }
+	  }
+ 
+     hAIDA_EvsdT_all->Fill(double(lastdT)/1E9,CorrDec.EnergyFront);
+     
+     if(cInputMain->pOnSpill==false)hAIDA_EvsdT_all_OFF->Fill(double(lastdT)/1E9,CorrDec.EnergyFront);
+     
+    if(cInputMain->pOnSpill==true)hAIDA_EvsdT_all_ON->Fill(double(lastdT)/1E9,CorrDec.EnergyFront);
+     
+    hAidaImpDecdT->Fill(double(lastdT)/1E9);  /// Time difference for all correlations
+    if(cInputMain->pbPLAS_WR!=0 )hAida_Dec_bPlas_Correl_dT->Fill(CorrDec.Time-cInputMain->pbPLAS_WR);  
+    
+     
+    //if(event_number > 0){
+    if(false){
+    //if(true){    
+    cout << endl << "*************************************************" << endl;
+    cout << "Printing out some CORRELATED AIDA decay events" << endl;
+    cout << "EVENT NUMBER " << event_number << endl;
+    cout << "j.Event: " << CorrDec.Event << endl;
+    cout << "j.Time: " << CorrDec.Time << endl;
+    cout << "j.DSSD: " << CorrDec.DSSD << endl;
+    cout << "j.StripX: " << CorrDec.StripX << endl;
+    cout << "j.StripY: " << CorrDec.StripY << endl;
+    cout << "j.ClusterSizeX: " << CorrDec.ClusterSizeX << endl;
+    cout << "j.ClusterSizeY: " << CorrDec.ClusterSizeY << endl;
+    cout << "j.TimeFront - j.TimeBack: " << (CorrDec.TimeFront - CorrDec.TimeBack) << endl;
+    cout << "corrbPlast: " << corrbPlast << endl;
+    cout << "corrHPGe: " << corrHPGe << endl;
+    cout << "corrFAT: " << corrFAT << endl;     
+    cout << "cInputMain->pFatmult: " << cInputMain->pFatmult << endl;
+    cout << "IMPLANT DETAILS: " << endl;
+    cout << "Implant.DSSD: " << CorrDec.DSSD << endl;
+    cout << "in pixel: (" << strx << "," << stry << ")" << endl;
+    cout << "GateTemp: " << GateTemp << endl;
+    cout << "with time difference: " << double(lastdT)/1e9 << endl; 
+    cout << endl << endl << "pt_lastSC41: " << cInputMain->pt_lastSC41 << endl;
+    cout << "pt_lastIMP_DSSD1: " << cInputMain->pt_lastIMP_DSSD1 << endl;
+    cout << "pt_lastIMP_DSSD2: " << cInputMain->pt_lastIMP_DSSD2 << endl;
+    cout << "pt_lastIMP_DSSD3: " << cInputMain->pt_lastIMP_DSSD3 << endl;
+
+    
+    for(int k=0; k<cInputMain->pFatmult; k++){
+            cout << "Fat_QDC_E[" << k << "]: " << cInputMain->pFat_QDC_E[k] << endl;   
+            cout << "time difference to decay: " << DecTime-cInputMain->pFAT_WR << endl;
+        }
+    
+    }
+ 
+    // Look for correlated HPGes
+    
+    if((DecTime - cInputMain->pGe_WR)>fCorrel->GAida_Ge_WRdT_Low && (DecTime - cInputMain->pGe_WR)<fCorrel->GAida_Ge_WRdT_High){
+        for(int g=0; g<Germanium_MAX_DETS; g++){
+            for (int h=0; h<Germanium_CRYSTALS; h++){
+                if(cInputMain->pGe_E[g][h]>0&& (g!=Germanium_SC41_Det&&g!=Germanium_SC41_Det_Digi&&g!=Germanium_TimeMachine_Det)){
+                   hGe_BetaGamma->Fill(cInputMain->pGe_E[g][h]); 
+                }
+            }
+          } 
+       
+     }
+     
+     //  cout << "fCorrel->GAida_Fat_WRdT_Low: " << fCorrel->GAida_Fat_WRdT_Low << endl;
+     //  cout << "fCorrel->GAida_Fat_WRdT_High: " << fCorrel->GAida_Fat_WRdT_High << endl; 
+     // Look for correlated LaBr3
+     if((DecTime-cInputMain->pFAT_WR)>fCorrel->GAida_Fat_WRdT_Low && (DecTime-cInputMain->pFAT_WR)<fCorrel->GAida_Fat_WRdT_High){ 
+         // cout << "TESTING HERE NOW! event number :" << event_number << endl;
+         for(int k=0; k<cInputMain->pFatmult; k++){
+           //  cout << "TESTING HERE TOO, event number: " << event_number << ",  pFat_QDC_E[k]: " <<  cInputMain->pFat_QDC_E[k] << endl;
+
+             if(cInputMain->pFat_QDC_E[k]>0 )   hFat_BetaGamma->Fill(cInputMain->pFat_QDC_E[k]); 
+             
+         }
+     }
+ 
+        // Put gated stuff here:
+        // 
+        for(int i=0;i<MAX_FRS_GATE;i++){
+          // HPGes******************************************************************************************************************
+          if(double(lastdT_Gate[i])/1e9 < 10){
+              
+          if((DecTime_Gate[i]-cInputMain->pGe_WR)>fCorrel->GAida_Ge_WRdT_Low && (DecTime_Gate[i]-cInputMain->pGe_WR)<fCorrel->GAida_Ge_WRdT_High){ 
+
+            ///  Correlated Germanium gammas
+              for(int g=0; g<Germanium_MAX_DETS; g++){
+                for (int h=0; h<Germanium_CRYSTALS; h++){
+                        
+                        
+                 if(cInputMain->pGe_EAddback[g][h]>0&& (g!=Germanium_SC41_Det&&g!=Germanium_SC41_Det_Digi&&g!=Germanium_TimeMachine_Det) && lastdT_Gate[i]!=0){
+               
+                       hGe_BetaGamma_E[i]->Fill(cInputMain->pGe_E[g][h]);    
+                       hGe_BetaGamma_dT[i]->Fill(double(lastdT_Gate[i])/1e9); 
+                       hGe_BetaGamma_EdT[i]->Fill(cInputMain->pGe_E[g][h],double(lastdT_Gate[i])/1e9); 
+
+                 }
+                }
+              }
+          }
+          
+          // FATIMA******************************************************************************************************************          
+          if((DecTime_Gate[i]-cInputMain->pFAT_WR)>fCorrel->GAida_Fat_WRdT_Low && (DecTime_Gate[i]-cInputMain->pFAT_WR)<fCorrel->GAida_Fat_WRdT_High){ 
+           
+             for(int k=0; k<cInputMain->pFatmult; k++){
+                if(cInputMain->pFat_QDC_E[k]>0 )   hFat_BetaGamma_E[i]->Fill(cInputMain->pFat_QDC_E[k]);          
+             }
+           }
+         }          
+          
+          
+          
+          
+          }
+
+  }// end of correlations
+ 
+ 
+ 
+     //Helena
+    
+    
+    //cout << "Implant in dssd: " << BestImp.DSSD << endl;  
+   
+     
+    //if((cInputMain->pbPLAS_WR - cInputMain->pFRS_WR)>-440 && (cInputMain->pbPLAS_WR - cInputMain->pFRS_WR)<-400){
+    //if(imphit.DSSD>0)
+    if(false){    
+    //if(cInputMain->pFRS_WR>0){   
+      cout << endl << "************************** NEW TEST ALL BPLAST *********************" << endl;   
+      cout << "Event number " << event_number << endl;
+      cout << "numImpIonsAIDA: " << numImpIonsAIDA << endl;
+      cout << "numImpIonsAIDA_all: " << numImpIonsAIDA_all << endl;
+      cout << "AIDA WR: " << AIDA_WR << ", stopped in dssd " << BestImp.DSSD << " strip (" << BestImp.StripX << "," << BestImp.StripY << ")." << endl;
+      cout << "imphit.DSSD: " << imphit.DSSD << ", pixel (" << imphit.StripX << "," << imphit.StripY << ")." << endl;
+      cout << "FRS WR: " << cInputMain->pFRS_WR << endl;
+      cout << "bPlas_WR: " << cInputMain->pbPLAS_WR << endl;
+      cout << "AIDA-FRS WR_dT: " << (cInputMain->pAIDA_WR - cInputMain->pFRS_WR) << endl;
+      cout << "bPlast-FRS WR_dT: " << (cInputMain->pFRS_WR - cInputMain->pbPLAS_WR) << endl;
+      cout << "FRS_z: " << cInputMain->pFRS_z << ", FRS_AoQ: " << cInputMain->pFRS_AoQ << endl;
+
+      cout << "individual channel values->" << endl;
+	  for(int a=1; a<4; a++) ///Detector number
+             for (int b = 0; b < 16; b++){  ///Channel number
+                         //for(int c=0; c<10;c++){
+			    cout << "bPlas detector " << a << " channel " << b << " has ToT: " << cInputMain-> pbPlas_ToTCalib[a][b][0] << endl;
+			 
+		}
+		
+	cout << "Time Machine Fatima VME: " << FatimaVME_TimeMachine_dT[0] << endl;
+        cout << "Time Machine bPlast: " << bPlast_TimeMachine_dT[0]<< endl;
+        
+	cout << "**********************************************************" << endl << endl; 
+      
+      
+    }     
+     
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+	
+	
+#if(0)	
+	
+	
+	
+	
+	
         for (auto& cInputRef : cInputMain->pAida)
         {
           auto* cInput = &cInputRef;
@@ -1848,24 +2489,23 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
     
       AidaHit firstDec;
       AidaHit BestImp;
-      Long64_t deltaT = 0;
-      
-//       cOutput->cBestimp =BestImp;
      ///IMPLANTS
      for(auto& i : imphits){
           AidaHit imphit = i;
           hAida_Imp_bPlas_dT->Fill(imphit.Time- cInputMain->pbPLAS_WR);
-          
             ///Get Plastic fired
    if(imphit.Time> fCorrel->GAIDA_Imp_bPlas_TLow && imphit.Time< fCorrel->GAIDA_Imp_bPlas_TLow){
     for(int a=1; a<=cInputMain->pbPlasDetNum; a++){ ///Detector number
         for (int b = 0; b <=cInputMain->pbPlasChan[a]; b++){  ///Channel number
-            for (int c = 0; c < bPLASTIC_TAMEX_HITS; c++){ 
+            for (int c = 0; c <= cInputMain->pbPlas_PMT_Lead_N[a][b]; c++){ 
       
        ///Punchthrough in bPlast Downstream         
-       if (cInputMain-> pbPlas_ToTCalib[bPLASTIC_DOWNSTREAM_DET][b][c]>0) bPlas_punchthrough=true;
+       if (cInputMain-> pbPlas_ToTCalib[2][b][c]>0) bPlas_punchthrough=true;
+      
        if (cInputMain-> pbPlas_ToTCalib[a][b][c]>fCorrel->GbPlast_Egate_low && cInputMain-> pbPlas_ToTCalib[a][b][c]<fCorrel->GbPlast_Egate_high) bPlas_fired=true;
        
+//        if(cInputMain-> pbPlas_ToTCalib[a][b][c]>0 && cInputMain->pOnSpill==false) bPlas_ToT_ch_beamoff[a][b]->Fill(cInputMain-> pbPlas_ToTCalib[a][b][c]);
+//        if(cInputMain-> pbPlas_ToTCalib[a][b][c]>0 && cInputMain->pOnSpill==true) bPlas_ToT_ch_beamon[a][b]->Fill(cInputMain-> pbPlas_ToTCalib[a][b][c]);
        
                         }       
                     }
@@ -1878,16 +2518,10 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
       int ImpstripY = imphit.StripY;  
       int ImpDSSD = imphit.DSSD-1;
       
-      if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-          if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-          if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_allhits->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-	  
-	   if(imphit.DSSD==1) hAIDA_EvsZ_DSSD1->Fill(cInputMain->pFRS_z,jPID.Energy);
-	       if(imphit.DSSD==2) hAIDA_EvsZ_DSSD2->Fill(cInputMain->pFRS_z,jPID.Energy);
-	       if(imphit.DSSD==3) hAIDA_EvsZ_DSSD3->Fill(cInputMain->pFRS_z,jPID.Energy);
       
       
-      if(imphit.DSSD<=3 && imphit.Stopped){ 
+      
+      if(imphit.DSSD<=2 && imphit.Stopped){ 
           jPID.Event = imphit.Event;
                 jPID.DSSD = imphit.DSSD;
                 jPID.StripX = imphit.StripX;
@@ -1914,19 +2548,6 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
 		
 		
 		
-		
-		if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-                if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-                if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_stopped->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-
-		if(cInputMain->pFRS_dEdeg_Z1_pass){
-		if(imphit.DSSD==1) hFRS_Z_AoQ_DSSD1_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-                if(imphit.DSSD==2) hFRS_Z_AoQ_DSSD2_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-                if(imphit.DSSD==3) hFRS_Z_AoQ_DSSD3_stopped_dEvsZ->Fill(cInputMain->pFRS_AoQ,cInputMain->pFRS_z);
-		}
-		
-		
-	      
 		
                 
                // jPID.FRS_Z = *FRS_z;
@@ -1960,27 +2581,15 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
      // }
      }///End of implants
      
-     
+
      for (auto& j : dechits){
     
      
      
          AidaHit dechit = j;
-         
-     /// AIDA decay DEAD TIME
-       if (dechit.Time > 0) {
-
-        if (lastAIDAdecayWR == 0) {
-          lastAIDAdecayWR = dechit.Time;
-        } else {
-    
-        hAida_Decay_deadtime->Fill((long long)(dechit.Time - lastAIDAWR)/1000);
-          lastAIDAWR = dechit.Time;
-        }
-      }///End of AIDA Decay deadtime
            
        
-         //  if(bPlas_punchthrough == 0){ /// Check this isn't a punchthrough event
+           if(bPlas_punchthrough == 0){ /// Check this isn't a punchthrough event
             if(AidaDecMult == 0){
           firstDec = dechit;/// Take the first decay in the stitched event as a reference time.
 
@@ -2000,85 +2609,6 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
       }
       AidaDecMult++;
 
-      hAida_FBdT->Fill(dechit.TimeFront - dechit.TimeBack);
-      hAida_FBdE->Fill(dechit.EnergyFront-dechit.EnergyBack);
-      
-      if(dechit.DSSD == 1) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1;
-      if(dechit.DSSD == 2) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2;
-      if(dechit.DSSD == 3) deltaT = dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3;
-  
-       // DSSD 1
-      if(dechit.DSSD==1){
-        if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e6 < 10){
-           hAIDA_Shock_DSSD1_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);
-        }
-        if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e3 < 100){
-           hAIDA_Shock_DSSD1_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);   
-        }
-        if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e6 > 10){
-           hAIDA_Shock_DSSD1_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);
-        }
-        if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD1)/1e3 > 100){
-           hAIDA_Shock_DSSD1_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD1_StripX);   
-        }       
-        
-          if((dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)>-3){
-           hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1->Fill(double(deltaT)/1e9);
-          }
-          if((dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD1_StripX)>-36){
-           hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD1_bg->Fill(double(deltaT)/1e9);
-          }          
-          
-          }
-          
-          // DSSD 2
-      if(dechit.DSSD==2){
-         if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e6 < 10){
-               hAIDA_Shock_DSSD2_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);
-     }
-         if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e3 < 100){
-               hAIDA_Shock_DSSD2_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);           
-         } 
-         if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e6 > 10){
-               hAIDA_Shock_DSSD2_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);
-     }
-         if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD2)/1e3 > 100){
-               hAIDA_Shock_DSSD2_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD2_StripX);          
-         }          
-         
-        if((dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)>-3){
-               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2->Fill(double(deltaT)/1e9);
-         }
-        if((dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD2_StripX)>-36){
-               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD2_bg->Fill(double(deltaT)/1e9);
-         }         
-      }
-      // DSSD 3
-      
-      if(dechit.DSSD==3){  
-            if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e6 < 10){
-               hAIDA_Shock_DSSD3_10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
-            }
-            if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e3 < 100){
-               hAIDA_Shock_DSSD3_100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
-            }  
-            if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e6 > 10){
-               hAIDA_Shock_DSSD3_after10ms->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
-            }
-            if(double(dechit.TimeFront - cInputMain->pt_lastIMP_DSSD3)/1e3 > 100){
-               hAIDA_Shock_DSSD3_after100us->Fill(dechit.StripX - cInputMain->plastIMP_DSSD3_StripX);
-            }             
-            
-        if((dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)<3 && (dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)>-3){
-               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3->Fill(double(deltaT)/1e9);
-            }
-         if((dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)<-30 && (dechit.StripX - cInputMain->plastIMP_DSSD3_StripX)>-36){
-               hAIDA_Implant_Decay_ALL_dT_shockgate_DSSD3_bg->Fill(double(deltaT)/1e9);
-            }           
-            
-        }
-      
-      
       ///Set the gates 
       
           
@@ -2090,9 +2620,8 @@ dT_frsfat_prompt = ((cInputMain->pFat_TDC_T[k]-cInputMain->pSC40[0])*0.025);
           
       if((dechit.EnergyFront-dechit.EnergyBack)<fCorrel->GAidaFB_dE && (dechit.EnergyFront - dechit.EnergyBack)>-fCorrel->GAidaFB_dE){/// Front-Back Energy condition   
           
-    ///Decay energy gate
-      if(dechit.EnergyFront > fCorrel->GAIDA_DecEFront_Min && dechit.EnergyFront < fCorrel->GAIDA_DecEFront_Max && dechit.EnergyBack > fCorrel->GAIDA_DecEBack_Min && dechit.EnergyBack < fCorrel->GAIDA_DecEBack_Max){ ///"good" decay conditions here
-                
+      if(dechit.EnergyFront < fCorrel->GAIDA_DecEFront && dechit.EnergyBack < fCorrel->GAIDA_DecEBack){ ///"good" decay conditions here
+                 
       
       ///dT for detector systems
      if(dechit.Time!=0 && cInputMain->pGe_WR!=0) hAida_Dec_Ge_dT->Fill(dechit.Time-cInputMain->pGe_WR);
@@ -2155,15 +2684,15 @@ for(int i=0;i<MAX_FRS_GATE;i++){
      } /// Front-Back Energy condition   
     }/// Front-Back Time condition   
    //} ///WR coincidences with bPlast
- //}///End of punchthrough 
-//  if(i==0) cout<<"lastdT_Gate[0] " << lastdT_Gate[0]<<endl;
-  for(int i=0;i<MAX_FRS_GATE;i++){
-          if(double(lastdT_Gate[i])/1e9 < fCorrel->GAidaImpDecT_High &&  double(lastdT_Gate[i])/1e9 > fCorrel->GAidaImpDecT_Low && goodhit == 1 ){
-              hDecPIDGated[i]->Fill(dechit.EnergyFront);
-          }
-  }
-    
+ }///End of punchthrough 
 }///End of Decays
+
+
+
+
+if(AidaDecMult>0 && first_timestamp == 0) first_timestamp = firstDec.Time;
+if(firstDec.Time>0) last_timestamp = firstDec.Time;
+
      
      ///Here we go with the beta-gamma coincidences: This is for all
      if(double(lastdT)/1e9 < fCorrel->GAidaImpDecT_High &&  double(lastdT)/1e9 > fCorrel->GAidaImpDecT_Low && goodhit == 1){
@@ -2195,7 +2724,6 @@ for(int i=0;i<MAX_FRS_GATE;i++){
           } ///End of Ge loop  
        }///End of Ge time gate 
      }///End of beta-gamma coincidences
-     
      
      ///Beta-gamma coincidences PID Gated 
      
@@ -2316,10 +2844,79 @@ for(int i=0;i<MAX_FRS_GATE;i++){
        }///End of beta-gamma coincidences
       }/// end of PID gates loop
      
-     
+
      lastdT=0;
      for (int i=0; i<MAX_FRS_GATE; i++) lastdT_Gate[i]=0;
-    } ///End of aida
+     
+
+    
+
+     
+     
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //if(FRS_WR>0)
+    for(int i=1;i<4;i++)
+        for(int j=0;j<bPLASTIC_CHAN_PER_DET;j++)
+            for(int k=0;k<10;k++){
+	      
+	       // look for betas in the bPlast
+	       if(i==1) // downstream detector
+		 if((cInputMain->pbPlas_ToTCalib[i][j][k]> betalo[j]) && (cInputMain->pbPlas_ToTCalib[i][j][k]< betahi[j])) bPlast1_betaev++;
+	       if(i==2) // upstream detector
+		 if((cInputMain->pbPlas_ToTCalib[i][j][k]> betalo[j+16])) bPlast2_betaev++;// && (cInputMain->pbPlas_ToTCalib[i][j][k]< betahi[j+16])) bPlast2_betaev++;		    
+		    
+	      
+               if(cInputMain->pbPlas_ToTCalib[i][j][k]>0) hbPlas_ToT_FRSGated[i][j]->Fill(cInputMain->pbPlas_ToTCalib[i][j][k]);    
+            }
+            
+            
+            
+      
+            
+    // Looking at beta-gated gammas!
+    if(numImpIonsAIDA==0 && FRS_WR == 0){
+      
+       //gate on betas in upstream
+      if(bPlast2_betaev>6){
+	
+	if(cInputMain->pGe_WR!=0) hbPlast_Ge_beta_dT->Fill(bPLAS_WR - cInputMain->pGe_WR);
+	
+	if((bPLAS_WR - cInputMain->pGe_WR)>-650 && (bPLAS_WR - cInputMain->pGe_WR)<-550)
+	for(int g=0; g<Germanium_MAX_DETS; g++){
+                    for (int h=0; h<Germanium_CRYSTALS; h++){
+                            if(cInputMain->pGe_EAddback[g][h]>0&& (g!=Germanium_SC41_Det&&g!=Germanium_SC41_Det_Digi&&g!=Germanium_TimeMachine_Det)){
+                                hGe_BetaGamma_bPlast->Fill(cInputMain->pGe_EAddback[g][h]); 
+  
+			    }
+		    }
+        }
+        
+        if((bPLAS_WR - FAT_WR)>-300 && (bPLAS_WR - FAT_WR)<-200)
+        for(int k=0; k<cInputMain->pFatmult; k++){
+
+             if(cInputMain->pFat_QDC_E[k]>0 )   hFat_BetaGamma_bPlast->Fill(cInputMain->pFat_QDC_E[k]); 
+        
+	}
+	
+      }
+      
+      
+    }
+                } ///End of aida
+            
+#endif    
+    
  }///end of function
 
  /**----------------------------------------------------------------------------------------------**/
@@ -2425,7 +3022,7 @@ file.open("Configuration_Files/2D_Gates/Fatima_PromptFlashCut.txt");
     if(file.good())cout<<"Setting Fatima Prompt flash cuts"<<endl;
   file.close();
   }
-  ///--------------Fat_TimeCorrection (moved to Anl Proc) -----------------------------------///
+  ///-------------------------------------------------------------------------------------------------///
 //   void EventCorrelProc::Fat_TimeCorrection(EventAnlStore* cInputMain){
 //    ///Do the dT time corrections
 //     for(int k=0; k<cInputMain->pFatmult; k++){
@@ -2446,20 +3043,78 @@ file.open("Configuration_Files/2D_Gates/Fatima_PromptFlashCut.txt");
 //   }
 
 
-  ///------------------------ Load Beta gates in bPlast --------------------------------------------------///
-  void EventCorrelProc::Beta_Gates(){
+///-------------------------------------------------------------------------------------------------///
+  void EventCorrelProc::FRS_Gates_corrProc(){
   Int_t i;
   ifstream    file;
-   file.open("Configuration_Files/bPlast/Beta_Gates.txt");
-    if(!file.good()) cout<<"Configuration_Files/bPlast/Beta_Gates.txt"<<endl;
-    for (i = 1; i < 3; i++){
-         for (int j = 0; j < 16; j++){
-       if(IsData(file)) file >>bPlast_Det>>bPlast_Chan>> Beta_Gate_Low[i][j]>> Beta_Gate_High[i][j] ;
-         }
-    }
-  file.close();
-}
   
+//    file.open("Configuration_Files/2D_Gates/dT_Det_SC41.txt");
+//     if(!file.good()) cout<<"Configuration_Files/2D_Gates/ID_ZvsAoQ.txt Not found!"<<endl;
+//    
+//     for (i = 0; i < 8; i++){
+//         for(int j=0; j<8; j++){
+//        if(IsData(file)) file >>PID gated  >> C_X_ZAoQ[i][j]>> C_Y_ZAoQ[i][j] ;
+//  
+//         }
+//     }
+  //file.close();
+   
+//    file.open("Configuration_Files/2D_Gates/ID_x2AoQ.txt");
+//     if(!file.good()) cout<<"Configuration_Files/2D_Gates/ID_x2AoQ.txt Not found!"<<endl;
+//     for (i = 0; i < 8; i++){
+//          for (int j = 0; j < 6; j++){
+//        if(IsData(file)) file >>X2AoQgnum>> XX2_AoQ[i][j]>> YX2_AoQ[i][j] ;
+//          }
+//     }
+//   file.close();
+  
+  
+ ///--------------------------------------------------------------------------------
+//   file.open("Configuration_Files/2D_Gates/ID_x4AoQ.txt");
+//     if(!file.good()) cout<<"Configuration_Files/2D_Gates/ID_x4AoQ.txt Not found!"<<endl;
+//     for (i = 0; i < 8; i++){
+//         for (int j = 0; j < 6; j++){
+//        if(IsData(file)) file >> X4AoQgnum>>XX4_AoQ[i][j]>> YX4_AoQ[i][j] ;
+//         }
+//     }
+//   file.close();
+  
+  
+ ///--------------------------------------------------------------------------------
+  
+//   file.open("Configuration_Files/2D_Gates/ID_Z_Z2.txt");
+//   if(!file.good()) cout<<"Configuration_Files/2D_Gates/ID_Z_Z2.txt Not found!"<<endl;
+//  for (i = 0; i < 8; i++){
+//     for (int j = 0; j < 6; j++){
+//        if(IsData(file)) file >>Z1Z2gnum>> X_ZZ2[i][j]>> Y_ZZ2[i][j] ;
+//     }
+//     }
+//   file.close();
+  
+  
+ ///--------------------------------------------------------------------------------
+//       file.open("Configuration_Files/2D_Gates/ID_ZvsAoQ.txt");
+//     if(!file.good()) cout<<"Configuration_Files/2D_Gates/ID_ZvsAoQ.txt Not found!"<<endl;
+//    
+//     for (i = 0; i < 8; i++){
+//         for(int j=0; j<8; j++){
+//        if(IsData(file)) file >>C_ZAoQgnum >> C_X_ZAoQ[i][j]>> C_Y_ZAoQ[i][j] ;
+//  
+//         }
+//     }
+//   file.close();
+  ///--------------------------------------------------------------------------------
+//       file.open("Configuration_Files/2D_Gates/ID_dEdeg_Z1.txt");
+//     
+//     for (i = 0; i < 8; i++){
+//         for(int j=0; j<6; j++){
+//        if(IsData(file)) file >>dEdeggnum >> X_dEdeg[i][j]>> Y_dEdeg[i][j] ;
+//         }
+//     }
+//   file.close();
+  
+  
+}
   ///-------------------------------------------------------------------------------------------------///
   int EventCorrelProc::IsData(ifstream &f) {
         char dum;

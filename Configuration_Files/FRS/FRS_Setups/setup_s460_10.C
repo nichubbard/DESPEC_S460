@@ -1,4 +1,7 @@
 #include "Riostream.h"
+#include <iostream>
+
+using namespace std;
 
 void setup_s460_10()
 {
@@ -66,7 +69,7 @@ void setup_s460_10()
  /*
   TModParameter* ElecMod = dynamic_cast<TModParameter*>(an->GetParameter("ModPar"));
    */
-  cout << endl << "setup script started" << endl;
+  //cout << endl << "setup script started" << endl;
 
 
 
@@ -1078,6 +1081,6 @@ void setup_s460_10()
   range->ladder_2_in = false;
   range->ladder_2_slope = -0.01691;
 
-  cout << "Focus distance S4: " << frs->dist_focS4 << endl;
-  cout << "Setup done " << endl;
+  //cout << "Focus distance S4: " << frs->dist_focS4 << endl;
+  //cout << "Setup done " << endl;
 }

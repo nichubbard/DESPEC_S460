@@ -3,7 +3,8 @@ GO4SYS = $(shell go4-config --go4sys)
 endif
 
 include $(GO4SYS)/Makefile.config
-CXXFLAGS += -std=c++11 -fdiagnostics-color -g -Wno-unused-variable -Wno-unused-but-set-variable
+#CXXFLAGS += -std=c++11 -fdiagnostics-color -g -Wno-unused-variable -Wno-unused-but-set-variable
+CXXFLAGS += -fdiagnostics-color -g -Wno-unused-variable -Wno-unused-but-set-variable
 
 ## normally should be like this for every module, but can be specific
 

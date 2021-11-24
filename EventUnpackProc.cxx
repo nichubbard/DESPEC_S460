@@ -317,6 +317,25 @@ Bool_t EventUnpackProc::BuildEvent(TGo4EventElement* dest)
        
         }
 
+
+	 //Check if we need to update FATIMA gainmatching
+         if (Used_Systems[3] && WR_d==3) {
+           if(WR_tmp > Detector_Systems[3]->next_ts_for_update()) {
+             int udts = (int) (((double) WR_tmp)*1.6666667E-11);
+             //printf("FATIMA WR %llu, %d, %llu\n", WR_tmp, udts, Detector_Systems[3]->next_ts_for_update());
+             Detector_Systems[3]->do_gain_matching(udts);
+	     //exit(0);
+           }
+         }
+	 
+	 ///Test to shift WR to FRS branch
+	  if (Used_Systems[0] && WR_d==0) {
+             int udts2 = (int) ((((double) WR_tmp)/60E9)-(1618551297094851800/60E9));
+             Detector_Systems[0]->do_gain_matching(udts2);
+		//cout << "done!" << endl;
+         }
+	 
+	 
 ///-----------------------------------------------------------------------------------------------------------///
         //if necessary, directly print MBS for wanted Detector_System
 //         if(PrcID_Conv == AIDA && false) print_MBS(pdata,lwords);
@@ -444,6 +463,9 @@ Bool_t EventUnpackProc::BuildEvent(TGo4EventElement* dest)
         fOutput->fFRS_z2 = RAW->get_FRS_z2();
         fOutput->fFRS_dEdeg = RAW->get_FRS_dEdeg();
         fOutput->fFRS_dEdegoQ = RAW->get_FRS_dEdegoQ();
+	fOutput->fFRS_tof2 = RAW->get_FRS_tof2_calib();
+	fOutput->fFRS_tof5 = RAW->get_FRS_tof5_calib();
+	
         ///Using MHTDC
 
 	if(RAW->get_FRS_id_mhtdc_aoq()>0) fOutput->fFRS_AoQ_mhtdc = RAW->get_FRS_id_mhtdc_aoq();
@@ -1530,7 +1552,7 @@ void EventUnpackProc::get_used_systems(){
       
       hSCI_R[index] = MakeTH1('D', Form("FRS/SCI/SCI%s/SCI%s/SCI%s_R",fext1[index],fext2    [index],count_title1[index]), Form("SCI%s_R", count_title1[index]),4096,0,4096,"Sc%s R dE [ch]", count_title1[index]);
 
-      hSCI_E[index] = MakeTH1('D', Form("FRS/SCI/SCI%s/SCI%s/SCI%s_E",fext1[index],fext2    [index],count_title1[index]), Form("SCI%s_E", count_title1[index]),4096,0,4096,"Sc%s Energy [ch]", count_title1[index]);
+      hSCI_E[index] = MakeTH1('D', Form("FRS/SCI/SCI%s/SCI%s/SCI%s_E",fext1[index],fext2    [index],count_title1[index]), Form("SCI%s_E", count_title1[index]),5000,0,5000,"Sc%s Energy [ch]", count_title1[index]);
 
       hSCI_Tx[index] = MakeTH1('D', Form("FRS/SCI/SCI%s/SCI%s/SCI%s_Tx",fext1[index],fext2    [index],count_title1[index]), Form("SCI%s_Tx", count_title1[index]),4096,0,4096,"Sc%s t_lr TAC [ch]", count_title1[index]);
 

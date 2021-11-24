@@ -35,6 +35,8 @@
 
 #include "Detector_System.cxx"
 
+#include "CalibParameter.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <TRandom3.h>
@@ -85,6 +87,8 @@ class FRS_Detector_System : public Detector_System{
     public:
     FRS_Detector_System();
    // void  get_params(TGo4Parameter* name);
+   
+   //int      IsData(std::ifstream &f);
         
 virtual ~FRS_Detector_System();
     
@@ -145,7 +149,7 @@ private:
     double VFTX_Cal_arr[1][32][1001];
     
      //void load_VFTX_Calibration_Files();
-  
+  CalibParameter *fCal;
     
     
     
@@ -1087,6 +1091,11 @@ private:
 	Float_t       mrtof_si_e4;
 	Float_t       mrtof_si_e5;
 	
+	Float_t	      WR_Ts;
+	
+	Double_t FRSWR_End[500];
+	Double_t tof5_s[500];
+	
     
 	//char* char_setup_directory_name;
 
@@ -1106,6 +1115,7 @@ private:
 
     Int_t get2bits(Int_t, int, int, int);
  
+
     
     
     Bool_t Check_WinCond(Float_t P, Float_t* V);
@@ -1119,10 +1129,15 @@ private:
     Bool_t Check_PolyCond_Multi_X_Y(Float_t X, Float_t Y, Float_t*** V, int n, int cond_num);
 
     void Setup_Conditions();
+   
+
+    ///Test to shift WR to FRS branch
+    void WR_Check(int ts_minutes);
     
+   unsigned long next_ts_for_update() {return 1;};
+    bool do_gain_matching(int ts_ns) {WR_Check( ts_ns); return 1;};
 
-
-
+   
 };
 
 

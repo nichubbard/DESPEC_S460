@@ -898,6 +898,11 @@ TSCIParameter::TSCIParameter() : TGo4Parameter("TSCIParameter") {
   tof_bll6 = 1.0;        /* [ps/channel]             */
   tof_brr6 = 1.0;        /* [ps/channel]             */
   tof_a6   = 0.0;        /* shift [ps]               */
+  
+  for(int i=0;i<500;i++) {
+  tof5_s1[i]=0;
+  FRSWR_End1[i] =0;
+  }
 }
 
 TSCIParameter::TSCIParameter(const char* name) : TGo4Parameter(name) {
@@ -1027,6 +1032,11 @@ TSCIParameter::TSCIParameter(const char* name) : TGo4Parameter(name) {
   tof_bll6 = 1.;        //
   tof_brr6 = 1.;        //
   tof_a6 = 0.0;          //
+  
+ for(int i=0;i<500;i++) {
+  tof5_s1[i]=0;
+  FRSWR_End1[i] =0;
+  }
 } 
 
 TSCIParameter::~TSCIParameter() {
@@ -1132,6 +1142,32 @@ Bool_t TSCIParameter::UpdateFrom(TGo4Parameter* par) {
   tof_bll6 = from->tof_bll6;
   tof_brr6 = from->tof_brr6;
   tof_a6 = from->tof_a6;
+  
+   /*
+  std::ifstream    file1;
+   file1.open("Configuration_Files/FRS/tof5_Calibration1.txt");
+  if (file1.fail()) {
+    std::cout << "ERROR:  Could not open file: tof5_Calibration1.txt\n";
+
+  }
+  
+  else {
+    std::cout << " TFRSParameter - reading calibration from: tof5_Calibration1.txt\n";
+         int i=0;
+	 //for(i = 0; i < 104; i++){
+	 while(!file1.eof()){
+          if(i<100){
+	  file1 >> FRSWR_End1[i] >>  tof5_s1[i];
+	 std::cout << FRSWR_End1[i] << " " << tof5_s1[i] << " " << i << std::endl;
+       	 i++;
+	 if (file1.fail()) std::cout << "ERROR reading tof5_Calibration1.txt\n";
+        }
+	}
+       
+      }
+
+      file1.close();
+    */
    
   return kTRUE;
 }
