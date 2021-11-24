@@ -1129,7 +1129,6 @@ private:
     Bool_t Check_PolyCond_Multi_X_Y(Float_t X, Float_t Y, Float_t*** V, int n, int cond_num);
 
     void Setup_Conditions();
-   
 
     ///Test to shift WR to FRS branch
     void WR_Check(int ts_minutes);

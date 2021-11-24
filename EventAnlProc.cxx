@@ -197,7 +197,7 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
         }
 
         create = true;
-        Do_WR_Histos(pInput);
+        Process_WR_Histos(pInput);
         Fat_TimeCorrection(pInput);
                  /** Now extract the data from the stored Unpacker array (root tree)**/
     ///--------------------------------------/**FRS Input**/------------------------------------------///
@@ -333,7 +333,7 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
 //         FRS_ts = pInput->fFRS_ts;
 //         FRS_ts2 = pInput->fFRS_ts2;
  // if(pOutput->pEvent_Number==42715 ){       }
-  Do_FRS_Histos(pOutput);
+  Process_FRS_Histos(pOutput);
             }
 
 
@@ -401,13 +401,13 @@ Bool_t EventAnlProc::BuildEvent(TGo4EventElement* dest)
                         }      
                     }
               }
-  Do_Plastic_Tamex_Histos(pInput,pOutput);
+  Process_Plastic_Tamex_Histos(pInput,pOutput);
     
    }
   
   ///--------------------------------------/**Fatima TAMEX Input**/------------------------------------------///
    if (PrcID_Conv[4] ==4 ){
-       Do_Fatima_Tamex_Histos(pInput,pOutput);  
+       Process_Fatima_Tamex_Histos(pInput,pOutput);  
         pOutput->pFAT_Tamex_WR = pInput->fFat_Tamex_WR;
         
         Fat_TAM_SC41L_ANA = pInput->fFat_Lead_Fast[FATIMA_TAMEX_SC41L][0];
@@ -514,7 +514,7 @@ if(Fatmult > 0){
 
 
 
-        Do_Fatima_Histos(pInput, pOutput);
+        Process_Fatima_Histos(pInput, pOutput);
   }//End of proc ID
 
 
@@ -573,7 +573,7 @@ if(Fatmult > 0){
               pOutput->pGe_CF_T_Aligned[GeDet[i]][GeCrys[i]] = Ge_cfd_Talign[i];
         }
  
-            Do_Germanium_Histos(pOutput);
+            Process_Germanium_Histos(pOutput);
       }
 
  ///--------------------------------------/**Finger Input**/------------------------------------------///
@@ -602,7 +602,7 @@ if(Fatmult > 0){
             }
         }
 
-      Do_Finger_Histos(pInput,pOutput);
+      Process_Finger_Histos(pInput,pOutput);
     }
   /**----------------------------------------------------------------------------------------------**/ 
   pOutput->SetValid(isValid);
@@ -650,7 +650,7 @@ if(Fatmult > 0){
 
 
 }
- void EventAnlProc::Do_WR_Histos(EventUnpackStore* pInput){
+ void EventAnlProc::Process_WR_Histos(EventUnpackStore* pInput){
      /// FATIMA DEAD TIME
        if (pInput->fFat_WR > 0) {
        
@@ -1032,7 +1032,7 @@ void EventAnlProc::Make_FRS_Histos(){
       
 }
 
-void EventAnlProc::Do_FRS_Histos(EventAnlStore* pOutput){
+void EventAnlProc::Process_FRS_Histos(EventAnlStore* pOutput){
     FRS_time_mins = 0;
     
     if(pOutput->pFRS_WR>0) FRS_time_mins =(pOutput->pFRS_WR/60E9)-(1618551297094851800/60E9);
@@ -1912,7 +1912,7 @@ AidaHit EventAnlProc::ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const
         
     }   
     /////////////////////////////////////////////////// 
-    void EventAnlProc::Do_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
+    void EventAnlProc::Process_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
     
          fired_det1=false, fired_det2=false;    
          ZERO_ARRAY(bPlas_tot_hits);
@@ -2109,12 +2109,13 @@ AidaHit EventAnlProc::ClusterPairToHit(std::pair<AidaCluster, AidaCluster> const
           hFat_ToT_Slow_vs_Fast=MakeTH2('D',"FATIMA_TAMEX/Fast_vs_Slow_Ch11","Fast ToT vs Slow ToT Ch.11",2000,0,20000,2000,0,20000);
           
           hFat_tamex_hit_pattern =  MakeTH1('D', "FATIMA_TAMEX/Fatima_Hitpattern", "Fatima Hit pattern",48,0,48);  
-          hFat_tamex_multiplicity =  MakeTH1('D', "FATIMA_TAMEX/Fatima_Multiplicity", "Fatima Multiplicity",48,0,48);  
+          hFat_tamex_multiplicity =  MakeTH1('D', "FATIMA_TAMEX/Fatima_Multiplicity", "Fatima Multiplicity",48,0,48);
+          hFat_Lead_Lead_Fast_T=  MakeTH1('D', "FATIMA_TAMEX/Test_dT", "Fatima Hit pattern",2000,-200000,200000);  
  }
  
  
 //-----------------------------------------------------------------------------------------------//
-void EventAnlProc::Do_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
+void EventAnlProc::Process_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){   
           
         //bool fired_det1=false, fired_det2=false;    
          
@@ -2144,7 +2145,7 @@ void EventAnlProc::Do_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStor
          SC41R_ANA_lead_fat[i] =0;
          bPlasDet1_coin_lead_Fat[i] =0;
          bPlasDet2_coin_lead_Fat[i] =0;
-         
+         lead_lead_fast_fat_onechan[i]=0;
          }
                 
      ///**---------------------------------------------LEAD -------------------------------------------------**/        
@@ -2177,7 +2178,14 @@ void EventAnlProc::Do_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStor
                 for (int j = 0; j < pInput->fFat_Fast_Lead_N[i]; j++){  ///Hit 
 
                     lead_fast_fat[i][j] = pInput->fFat_Lead_Fast[i][j];  
-		    
+		     if(lead_fast_fat[i][j]!=0 && lead_fast_fat[i][j]!=0) 
+		    {
+                              
+                      lead_lead_fast_fat_onechan[j] = (lead_fast_fat[8][j]-lead_fast_fat[3][j])*5;  
+                
+                      
+                      hFat_Lead_Lead_Fast_T->Fill(lead_lead_fast_fat_onechan[j]);
+		    }
                     //hFat_Lead_Fast_T[i]->Fill(lead_fast_fat[i][j]);    
                     pOutput->pFat_Fast_LeadT[i][j] = lead_fast_fat[i][j];    
                     pOutput->pFat_LeadHits = hits_fat_lead; 
@@ -2380,7 +2388,7 @@ void EventAnlProc::Make_Fatima_Histos(){
     
 }
 ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
-void EventAnlProc::Do_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
+void EventAnlProc::Process_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
     
     Fat_time_mins =0; 
    
@@ -2522,17 +2530,17 @@ if(Fatmult > 0){
       pOutput->pSC40mult =  SC40mult;
       pOutput->pSC41mult =  SC41mult; 
  
-        for(int i = 0; i < SC40mult; i++){
+         for(int k = 0; k < SC40mult; k++){
             
-            pOutput->pSC40[i] = SC40[i];    
+            pOutput->pSC40[k] = SC40[k];    
             
         }//End sc40 for fill
         
-        for(int i = 0; i < SC41mult; i++){
+        for(int k = 0; k < SC41mult; k++){
             
-            pOutput->pSC41[i] = SC41[i];    
+            pOutput->pSC41[k] = SC41[k];    
             
-        }//End sc41 for fill        
+        }//End sc41 for fill         
     }     
   //  cout<<"pInput->fFat_TMCh1mult " << pInput->fFat_TMCh1mult <<endl;
     for(int i =0; i<pInput->fFat_TMCh1mult; i++)  pOutput->pFat_TMCh1[i] = pInput->fFat_TMCh1[i];
@@ -2648,7 +2656,7 @@ if(Fatmult > 0){
       }
         }
     ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
-    void EventAnlProc::Do_Germanium_Histos(EventAnlStore* pOutput)
+    void EventAnlProc::Process_Germanium_Histos(EventAnlStore* pOutput)
     {
         Ge_time_mins=0;
       if(Ge_WR>0) Ge_time_mins =(Ge_WR/60E9)-26975854;
@@ -2947,7 +2955,7 @@ if(Fatmult > 0){
                 }
             }
         }
-    }//end of Do_Germanium_Histos()
+    }//end of Process_Germanium_Histos()
     
     
     /**----------------------------------------------------------------------------------**/
@@ -3010,7 +3018,7 @@ hFING_Multiplicity =  MakeTH1('I',"FINGER/Multiplicity","Finger Multiplicity", 5
 }
 ///-----------------------------------------------------------------------------------------------------------------------------------------------------------------------///
 
-    void EventAnlProc::Do_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
+    void EventAnlProc::Process_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput){
   // Verify Finger Data Sanity
   // Need to investigate if lead/trail mismatches are fine or not
   int maxtot = 0;

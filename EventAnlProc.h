@@ -221,7 +221,8 @@ class EventAnlProc : public TGo4EventProcessor {
       double Fat_QDC_E[FAT_MAX_VME_CHANNELS];
       double Fat_QDC_E_Raw[FAT_MAX_VME_CHANNELS];
       ULong64_t timeLAST_Fat, timeFIRST_Fat;
-       double FatRealTime;
+      double FatRealTime;
+      double lead_lead_fast_fat_onechan[FATIMA_TAMEX_HITS];
       
       Long64_t Fat_QDC_T_coarse[FAT_MAX_VME_CHANNELS];
       double Fat_QDC_T_fine[FAT_MAX_VME_CHANNELS];
@@ -315,18 +316,18 @@ class EventAnlProc : public TGo4EventProcessor {
      void Make_Fat_Plas_Histos();
      void Make_Fing_Plas_Histos();
 
-     void Do_FRS_Histos(EventAnlStore* pOutput);
-     void Do_Plastic_VME_Histos(EventAnlStore* pOutput);
-     void Do_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
-     void Do_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
-     void Do_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
+     void Process_FRS_Histos(EventAnlStore* pOutput);
+     void Process_Plastic_VME_Histos(EventAnlStore* pOutput);
+     void Process_Plastic_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
+     void Process_Fatima_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
+     void Process_Fatima_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
      
-     void Do_Fatima_VME_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
-     void Do_Germanium_Histos(EventAnlStore* pOutput);
-     void Do_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
-     void Do_Fing_Plas_Histos(EventAnlStore* pOutput);
-     void Do_Fat_Plas_Histos(EventAnlStore* pOutput);
-     void Do_WR_Histos(EventUnpackStore* pInput);
+     void Process_Fatima_VME_Tamex_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
+     void Process_Germanium_Histos(EventAnlStore* pOutput);
+     void Process_Finger_Histos(EventUnpackStore* pInput, EventAnlStore* pOutput);
+     void Process_Fing_Plas_Histos(EventAnlStore* pOutput);
+     void Process_Fat_Plas_Histos(EventAnlStore* pOutput);
+     void Process_WR_Histos(EventUnpackStore* pInput);
       // TH1 *GermaniumCal;
 
    
@@ -558,6 +559,7 @@ class EventAnlProc : public TGo4EventProcessor {
              TH1 *hFat_tamex_hit_pattern;
              TH1 *hFat_tamex_multiplicity;
              TH2 *hFat_ToT_Slow_vs_Fast;
+             TH1 *hFat_Lead_Lead_Fast_T;
 
             TH1 *hScalar_hit_pattern;
             //Fatima Histograms

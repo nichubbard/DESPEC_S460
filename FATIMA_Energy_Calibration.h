@@ -26,7 +26,6 @@ private:
     void load_GainMatching_List();
     void load_GainMatching_File(gmentry gm);
 
-
 public:
     FATIMA_Energy_Calibration();
     ~FATIMA_Energy_Calibration();
