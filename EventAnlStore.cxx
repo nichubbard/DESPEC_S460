@@ -63,6 +63,7 @@ void EventAnlStore::Clear(Option_t *t)
       ZERO_ARRAY(pFRS_x2AoQ_pass);
       ZERO_ARRAY(pFRS_x4AoQ_pass);
       ZERO_ARRAY(pFRS_Z_Z2_pass);
+      ZERO_ARRAY(pFRS_Z_SC_pass);
       ZERO_ARRAY(pFRS_scaler);
       ZERO_ARRAY(pFRS_scaler_delta);
       ZERO_ARRAY(pFRS_dEdeg_Z1_pass);
