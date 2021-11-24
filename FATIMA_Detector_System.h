@@ -160,8 +160,6 @@ public:
     unsigned long next_ts_for_update() {return FATIMA_E_CALIB->next_ts_for_update;};
 
     //bool do_gain_matching(){return gain_match_used;};
-    bool do_gain_matching(int ts_ns) {FATIMA_E_CALIB->UpdateGainMatching(ts_ns); return 1;};
-    unsigned long next_ts_for_update() {return FATIMA_E_CALIB->next_ts_for_update;};
 
    // void write();
     //void set_Gain_Match_Filename(std::string);
